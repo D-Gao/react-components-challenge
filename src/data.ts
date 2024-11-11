@@ -1,31 +1,38 @@
 export const categories = {
   "1001": { categoryId: "1001", name: "Electronics" },
-  "1002": { categoryId: "1002", name: "Home & Kitchen" },
+  /* "1002": { categoryId: "1002", name: "Home & Kitchen" }, */
   /* "1003": { categoryId: "1003", name: "Fitness & Outdoors" },
   "1004": { categoryId: "1004", name: "Fashion & Accessories" },
   "1005": { categoryId: "1005", name: "Office Supplies" }, */
 };
+export enum Status {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+}
 
 export type Product = {
   id: string;
   ref: string;
   name: string;
   categoryId: string;
+  status?: Status;
   description: string;
   imageUrlPath: string;
 };
 
-export const totalProducts = [
+export const totalProducts: Product[] = [
   {
     id: "1",
     ref: "007",
     name: "Classic Watch",
+    status: Status.INACTIVE,
     categoryId: "1004",
     description: "A timeless classic watch with leather straps.",
     imageUrlPath: "/images/products/classic-watch.jpg",
   },
   {
     id: "2",
+    status: Status.INACTIVE,
     ref: "008",
     name: "Sports Shoes",
     categoryId: "1004",
@@ -34,6 +41,7 @@ export const totalProducts = [
   },
   {
     id: "3",
+    status: Status.INACTIVE,
     ref: "009",
     name: "Wireless Earbuds",
     categoryId: "1001",
@@ -42,6 +50,7 @@ export const totalProducts = [
   },
   {
     id: "4",
+    status: Status.INACTIVE,
     ref: "010",
     name: "Smartphone",
     categoryId: "1001",
@@ -50,6 +59,7 @@ export const totalProducts = [
   },
   {
     id: "5",
+    status: Status.INACTIVE,
     ref: "011",
     name: "Gaming Laptop",
     categoryId: "1001",
@@ -58,6 +68,7 @@ export const totalProducts = [
   },
   {
     id: "6",
+    status: Status.ACTIVE,
     ref: "012",
     name: "Bluetooth Speaker",
     categoryId: "1001",
@@ -66,6 +77,7 @@ export const totalProducts = [
   },
   {
     id: "7",
+    status: Status.ACTIVE,
     ref: "013",
     name: "Fitness Tracker",
     categoryId: "1003",
@@ -74,6 +86,7 @@ export const totalProducts = [
   },
   {
     id: "8",
+    status: Status.ACTIVE,
     ref: "014",
     name: "Electric Kettle",
     categoryId: "1002",
@@ -108,6 +121,7 @@ export const totalProducts = [
     id: "12",
     ref: "018",
     name: "Smart TV",
+    status: Status.ACTIVE,
     categoryId: "1001",
     description: "4K Ultra HD smart TV with voice control.",
     imageUrlPath: "/images/products/smart-tv.jpg",
@@ -116,6 +130,7 @@ export const totalProducts = [
     id: "13",
     ref: "019",
     name: "Tablet",
+    status: Status.ACTIVE,
     categoryId: "1001",
     description: "Lightweight tablet with high-resolution display.",
     imageUrlPath: "/images/products/tablet.jpg",
@@ -124,6 +139,7 @@ export const totalProducts = [
     id: "14",
     ref: "020",
     name: "Wireless Charger",
+    status: Status.ACTIVE,
     categoryId: "1001",
     description: "Fast wireless charger compatible with multiple devices.",
     imageUrlPath: "/images/products/wireless-charger.jpg",
@@ -140,6 +156,7 @@ export const totalProducts = [
     id: "16",
     ref: "022",
     name: "Digital Camera",
+    status: Status.ACTIVE,
     categoryId: "1001",
     description: "Compact digital camera with high zoom capability.",
     imageUrlPath: "/images/products/digital-camera.jpg",
@@ -164,6 +181,7 @@ export const totalProducts = [
     id: "19",
     ref: "025",
     name: "Portable Projector",
+    status: Status.ACTIVE,
     categoryId: "1001",
     description: "Mini portable projector with HDMI and USB support.",
     imageUrlPath: "/images/products/portable-projector.jpg",

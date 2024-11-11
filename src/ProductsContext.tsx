@@ -1,14 +1,11 @@
 import { createContext, ReactNode, useContext, useState } from "react";
-import { Product, totalProducts } from "./data";
+import { Product, Status, totalProducts } from "./data";
 
 // Define the type for your context data
 interface MyContextType {
-  products: Product[];
-  moveCard: (
-    sourceId: string,
-    targetColumnId: string,
-    targetPosition: number
-  ) => void;
+  products: Record<string, Product[]>;
+
+  setProducts: React.Dispatch<React.SetStateAction<Record<string, Product[]>>>;
 }
 
 // Create the context with an initial value (you can set it as `null` to start)
@@ -31,36 +28,12 @@ interface MyProviderProps {
 }
 
 export const MyProvider: React.FC<MyProviderProps> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(totalProducts);
-  const moveCard = (
-    sourceId: string,
-    targetColumnId: string,
-    targetPosition: number
-  ) => {
-    // Implement your logic to update `products` here
-    // For example, find the source product, remove it from its current position,
-    // and insert it at the target position in the target column.
-
-    const updatedProducts = [...products]; // Clone products for immutability
-
-    // Find the source product by `sourceId`
-    const sourceIndex = updatedProducts.findIndex((p) => p.id === sourceId);
-    const sourceProduct = updatedProducts[sourceIndex];
-
-    // Remove source product from its current position
-    updatedProducts.splice(sourceIndex, 1);
-
-    // Insert source product at target position in the target column
-    updatedProducts.splice(targetPosition, 0, {
-      ...sourceProduct,
-      columnId: targetColumnId,
-    });
-
-    // Update the products state
-    setProducts(updatedProducts);
-  };
+  const [products, setProducts] = useState<Record<string, Product[]>>({
+    active: totalProducts.filter((p) => p.status === Status.ACTIVE),
+    inactive: totalProducts.filter((p) => p.status === Status.INACTIVE),
+  });
   return (
-    <MyContext.Provider value={{ products, moveCard }}>
+    <MyContext.Provider value={{ products, setProducts }}>
       {children}
     </MyContext.Provider>
   );

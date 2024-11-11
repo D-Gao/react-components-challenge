@@ -6,7 +6,7 @@ import Card from "./Card";
 
 type Props = {
   items: Product[];
-  id: number;
+  id: string;
 };
 
 const Container = ({ items, id }: Props) => {
@@ -21,7 +21,7 @@ const Container = ({ items, id }: Props) => {
       dropTargetForElements({
         element,
         getData() {
-          return { columnId: `${id}-col` };
+          return { columnId: `${id}` };
         },
         canDrop({ source }) {
           return source.element !== element;
@@ -41,10 +41,13 @@ const Container = ({ items, id }: Props) => {
   }, []);
 
   return (
-    <div className=" h-1/2 w-80 border p-2 rounded-sm" ref={containerRef}>
-      <div className=" flex flex-col gap-2">
-        {items.map((p) => (
-          <Card item={p} key={p.id} />
+    <div
+      className=" h-1/2 w-80 border rounded-sm overflow-auto"
+      ref={containerRef}
+    >
+      <div className=" grid grid-cols-2">
+        {items.map((p, index) => (
+          <Card item={p} column={id} key={p.id + index} />
         ))}
       </div>
     </div>
