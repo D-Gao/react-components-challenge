@@ -3,6 +3,8 @@ import { Product } from "./data";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import Card from "./Card";
+import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
+import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 
 type Props = {
   items: Product[];
@@ -35,6 +37,10 @@ const Container = ({ items, id }: Props) => {
         onDrop() {
           console.log("column on drop");
         },
+      }),
+      autoScrollForElements({
+        element: containerRef.current,
+        canScroll: ({ source }) => source.data.type === "card",
       })
     );
     return cleanup;
