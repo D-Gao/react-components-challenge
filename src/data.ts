@@ -1,9 +1,18 @@
 export const categories = {
   "1001": { categoryId: "1001", name: "Electronics" },
   "1002": { categoryId: "1002", name: "Home & Kitchen" },
-  "1003": { categoryId: "1003", name: "Fitness & Outdoors" },
+  /* "1003": { categoryId: "1003", name: "Fitness & Outdoors" },
   "1004": { categoryId: "1004", name: "Fashion & Accessories" },
-  "1005": { categoryId: "1005", name: "Office Supplies" },
+  "1005": { categoryId: "1005", name: "Office Supplies" }, */
+};
+
+export type Product = {
+  id: string;
+  ref: string;
+  name: string;
+  categoryId: string;
+  description: string;
+  imageUrlPath: string;
 };
 
 export const totalProducts = [
