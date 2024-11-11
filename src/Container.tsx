@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { Product } from "./data";
-import { GripVertical } from "lucide-react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 import Card from "./Card";

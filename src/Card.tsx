@@ -41,9 +41,9 @@ const Card = ({ item }: Props) => {
         getData() {
           return item;
         },
-        canDrop({ source }) {
+        canDrop(args) {
           /*  console.log(source.element !== element); */
-          return source.element !== element;
+          return args.source.element !== element;
         },
         onDragEnter() {
           console.log("dropTargetForElements drag enter");
