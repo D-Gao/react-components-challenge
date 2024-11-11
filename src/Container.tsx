@@ -49,7 +49,7 @@ const Container = ({ items, id }: Props) => {
         {Array.from({ length: 1 }, () => items)
           .flat()
           .map((p, index) => (
-            <Card item={p} column={id} key={p.id + index} />
+            <Card item={p} column={id} key={p.id} />
           ))}
       </div>
     </div>

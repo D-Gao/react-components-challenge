@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Product } from "./data";
 import { GripVertical } from "lucide-react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -17,7 +17,7 @@ export interface DraggableType<T> {
   column: string;
 }
 
-const Card = ({ item, column }: Props) => {
+const Card = memo(({ item, column }: Props) => {
   const [isCardOver, setCardOver] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -104,6 +104,6 @@ const Card = ({ item, column }: Props) => {
       </div>
     </div>
   );
-};
+});
 
 export default Card;

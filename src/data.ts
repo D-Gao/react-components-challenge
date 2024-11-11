@@ -26,6 +26,7 @@ export const totalProducts: Product[] = [
     id: "1",
     ref: "100",
     name: "Electronic Device 1",
+    status: Status.INACTIVE,
     categoryId: "1001",
     description: "Description for electronic device 1 with advanced features.",
     imageUrlPath: "/images/products/electronic-device-1.jpg",
