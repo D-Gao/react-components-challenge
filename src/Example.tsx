@@ -70,7 +70,8 @@ const Example = () => {
       const item: Product = sourceColumn[itemIndexInStartColumn];
 
       const destinationItems = [...destinationColumn];
-      const newIndexInDestination = itemIndexInFinishColumn ?? 0;
+      const newIndexInDestination =
+        itemIndexInFinishColumn ?? destinationColumn.length;
       destinationItems.splice(newIndexInDestination, 0, item);
 
       setProducts((prev) => {
@@ -243,7 +244,7 @@ const Example = () => {
     <div className="h-screen w-screen flex justify-center items-center bg-background">
       <div className=" flex gap-2 h-full items-center">
         {Object.values(Status).map((s) => (
-          <Container items={products[s]} id={s} key={s}></Container>
+          <Container items={products[s]} id={s} key={s} colNum={2}></Container>
         ))}
       </div>
     </div>

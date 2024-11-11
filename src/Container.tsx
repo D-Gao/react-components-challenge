@@ -10,11 +10,10 @@ import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 type Props = {
   items: Product[];
   id: string;
+  colNum: number;
 };
 
-const colNum = 2;
-
-const Container = ({ items, id }: Props) => {
+const Container = ({ items, id, colNum = 1 }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,15 +49,15 @@ const Container = ({ items, id }: Props) => {
   }, []);
 
   const rowVirtualizer = useVirtualizer({
-    count: items.length / colNum,
+    count: Math.ceil(items.length / colNum),
     getScrollElement: () => containerRef.current,
-    estimateSize: useCallback(() => 35, []),
+    estimateSize: useCallback(() => 50, []),
     overscan: 5,
   });
 
   return (
     <div
-      className=" h-1/2 w-96 border rounded-sm overflow-auto"
+      className=" h-1/2 w-[700px] border rounded-sm overflow-auto"
       ref={containerRef}
       style={{
         position: "relative",
@@ -74,12 +73,12 @@ const Container = ({ items, id }: Props) => {
       >
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const rowIndex = virtualRow.index;
-          const itemIndex1 = rowIndex * colNum;
-          const itemIndex2 = itemIndex1 + 1;
+          const itemIndex = rowIndex * colNum;
 
           // Get items for both columns in the current virtual row
           /* const item1 = items[itemIndex1];
           const item2 = items[itemIndex2]; */
+          /* if (!items[itemIndex]) return; */
 
           return (
             <div
@@ -91,11 +90,13 @@ const Container = ({ items, id }: Props) => {
                 width: "100%",
                 height: `${virtualRow.size}px`,
                 transform: `translateY(${virtualRow.start}px)`,
-                display: "flex",
+                display: "grid",
+                gridTemplateColumns: `repeat(${colNum}, minmax(0, 1fr))`,
               }}
             >
               {Array.from({ length: colNum }).map((_, i) => {
-                return <div style={{ width: "50%" }}>Row {itemIndex1 + i}</div>;
+                const item = items[itemIndex + i];
+                return item && <Card item={item} column={id} key={item.id} />;
               })}
             </div>
           );

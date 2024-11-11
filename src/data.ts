@@ -4406,22 +4406,4 @@ export const totalProducts: Product[] = [
       "Description for electronic device 498 with advanced features.",
     imageUrlPath: "/images/products/electronic-device-498.jpg",
   },
-  {
-    id: "499",
-    ref: "598",
-    name: "Electronic Device 499",
-    categoryId: "1001",
-    description:
-      "Description for electronic device 499 with advanced features.",
-    imageUrlPath: "/images/products/electronic-device-499.jpg",
-  },
-  {
-    id: "500",
-    ref: "599",
-    name: "Electronic Device 500",
-    categoryId: "1001",
-    description:
-      "Description for electronic device 500 with advanced features.",
-    imageUrlPath: "/images/products/electronic-device-500.jpg",
-  },
 ];
