@@ -42,13 +42,15 @@ const Container = ({ items, id }: Props) => {
 
   return (
     <div
-      className=" h-1/2 w-80 border rounded-sm overflow-auto"
+      className=" h-1/2 w-100 border rounded-sm overflow-auto"
       ref={containerRef}
     >
       <div className=" grid grid-cols-2">
-        {items.map((p, index) => (
-          <Card item={p} column={id} key={p.id + index} />
-        ))}
+        {Array.from({ length: 1 }, () => items)
+          .flat()
+          .map((p, index) => (
+            <Card item={p} column={id} key={p.id + index} />
+          ))}
       </div>
     </div>
   );

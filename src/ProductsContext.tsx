@@ -29,7 +29,7 @@ interface MyProviderProps {
 
 export const MyProvider: React.FC<MyProviderProps> = ({ children }) => {
   const [products, setProducts] = useState<Record<string, Product[]>>({
-    active: totalProducts.filter((p) => p.status === Status.ACTIVE),
+    active: totalProducts.filter((p) => p),
     inactive: totalProducts.filter((p) => p.status === Status.INACTIVE),
   });
   return (
