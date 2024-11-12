@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { memo, useEffect, useRef, useState } from "react";
 import { Product } from "./data";
 import { GripVertical } from "lucide-react";
@@ -87,7 +88,7 @@ const Card = memo(({ item, column }: Props) => {
 
   return (
     <div
-      className="p-2 "
+      className="p-2 transition-opacity duration-200 "
       style={{
         opacity: isCardOver ? 0.5 : 1,
       }}
