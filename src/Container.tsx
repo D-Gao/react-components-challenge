@@ -57,7 +57,7 @@ const Container = ({ items, id, colNum = 1 }: Props) => {
 
   return (
     <div
-      className=" h-1/2 w-[700px] border rounded-sm overflow-auto"
+      className=" h-1/2 w-[48vw] border rounded-sm overflow-auto"
       ref={containerRef}
       style={{
         position: "relative",

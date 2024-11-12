@@ -244,7 +244,7 @@ const Example = () => {
     <div className="h-screen w-screen flex justify-center items-center bg-background">
       <div className=" flex gap-2 h-full items-center">
         {Object.values(Status).map((s) => (
-          <Container items={products[s]} id={s} key={s} colNum={2}></Container>
+          <Container items={products[s]} id={s} key={s} colNum={1}></Container>
         ))}
       </div>
     </div>
