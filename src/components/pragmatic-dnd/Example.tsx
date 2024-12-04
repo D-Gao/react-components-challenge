@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { categories, Product, Status } from "@/data";
+import { categories, Product, Status } from "./data";
 import Container from "./Container";
-import { useMyContext } from "@/ProductsContext";
+import { useMyContext } from "./ProductsContext";
 import { useCallback, useEffect } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
