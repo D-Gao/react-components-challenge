@@ -4,7 +4,7 @@ import { SlideComponent, SlideItem } from "./VerticalSlider";
 
 const TikTok = () => {
   return (
-    <div>
+    <div className="w-full flex justify-center">
       <SlideComponent items={tracks} index={0}>
         {({ item }) => (
           <SlideItem key={item.id}>

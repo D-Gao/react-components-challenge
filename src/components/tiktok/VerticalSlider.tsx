@@ -56,11 +56,12 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
 
   //based on the curernt index update the virtual list
   const virtualList = useMemo(() => {
-    if (items.length <= 3) {
+    if (items.length <= 4) {
       return items;
     } else {
       const start = (currentIndex - 1 + items.length) % items.length;
       const end = (currentIndex + 1) % items.length;
+      const end2 = (currentIndex + 2) % items.length;
       return [items[start], items[currentIndex], items[end]];
     }
   }, [currentIndex, items]);
@@ -253,7 +254,12 @@ const SlideItem = ({
   children: ReactNode;
 }) => {
   return (
-    <div className={cn("relative h-full w-full flex-shrink-0", className)}>
+    <div
+      className={cn(
+        "relative h-[90%] mb-4 w-full flex-shrink-0 animate-fadeIn",
+        className
+      )}
+    >
       {children}
     </div>
   );

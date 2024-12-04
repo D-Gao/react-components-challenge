@@ -7,7 +7,7 @@ type Props = {
 
 const Container: FC<Props> = ({ track }) => {
   return (
-    <div className="border w-[50vw] h-[100vh] rounded-xl bg-[#1D1D1B] p-4 flex flex-col gap-4">
+    <div className="border w-[50vw] h-full rounded-xl bg-[#1D1D1B] p-4 flex flex-col gap-4">
       <img
         draggable={false}
         className=" rounded-lg"
