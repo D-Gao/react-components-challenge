@@ -224,13 +224,9 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
     if (!wrapperEl.current) return;
 
     const el = wrapperEl.current;
-
-    const containerStyles = getComputedStyle(el);
-    const gap = parseFloat(containerStyles.gap || "0");
-
     const t = getSlideOffset(1, el);
-    const dx = type === SlideType.HORIZONTAL ? t - gap : 0;
-    const dy = type === SlideType.VERTICAL ? t - gap : 0;
+    const dx = type === SlideType.HORIZONTAL ? t : 0;
+    const dy = type === SlideType.VERTICAL ? t : 0;
     el.style.transitionDuration = `0ms`;
     el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
   }, [getSlideOffset, type, virtualList]); //need also a recalculated position when a virtualist is changed.
