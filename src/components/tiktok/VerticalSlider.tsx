@@ -20,6 +20,8 @@ export enum SlideType {
   VERTICAL = 1,
 }
 
+const slideTransitionDuration = 150;
+
 interface SlideComponentProps<T> {
   items: T[] | undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
   index?: number;
@@ -94,6 +96,10 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const getSlideOffset = useCallback(
     (index: number, el: HTMLDivElement): number => {
+      const containerStyles = getComputedStyle(el);
+      // Parse the gap value (it might be in pixels, e.g., "20px")
+      const gap = parseFloat(containerStyles.gap || "0");
+
       if (type === SlideType.HORIZONTAL) {
         const widths: number[] = [];
         Array.from(el.children).forEach((child) => {
@@ -101,7 +107,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
         });
         const offsetWidths = widths.slice(0, index);
         if (offsetWidths.length) {
-          return -offsetWidths.reduce((a, b) => a + b, 0);
+          return -offsetWidths.reduce((a, b) => a + b + gap, 0);
         }
         return 0;
       } else {
@@ -111,7 +117,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
           heights.push(v.getBoundingClientRect().height);
         });
         heights = heights.slice(0, index);
-        if (heights.length) return -heights.reduce((a, b) => a + b);
+        if (heights.length) return -heights.reduce((a, b) => a + b + gap);
         return 0;
       }
     },
@@ -121,7 +127,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   const slideReset = (newIndex: number) => {
     if (!wrapperEl.current) return;
     const el = wrapperEl.current;
-    el.style.transitionDuration = "150ms";
+    el.style.transitionDuration = slideTransitionDuration + "ms";
     const t = getSlideOffset(newIndex, el);
     const dx = type === SlideType.HORIZONTAL ? t : 0;
     const dy = type === SlideType.VERTICAL ? t : 0;
@@ -155,14 +161,15 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
     move.current.y = e.pageY - start.current.y;
 
     const canSlideRes = canSlide();
+
     if (canSlideRes) {
       const isNextDirection =
         type === SlideType.VERTICAL ? move.current.y < 0 : move.current.x < 0;
-
       e.stopPropagation();
+      const offsetDimension = getSlideOffset(1, el);
       //获取偏移量
       const t =
-        getSlideOffset(1, el) + (isNextDirection ? judgeValue : -judgeValue);
+        offsetDimension; /* + (isNextDirection ? judgeValue : -judgeValue) */
       //偏移量加当前手指移动的距离就是slide要偏移的值
       const dx = type === SlideType.VERTICAL ? 0 : t + move.current.x;
       const dy = type === SlideType.VERTICAL ? t + move.current.y : 0;
@@ -203,7 +210,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
           if (onUpdateIndex) {
             onUpdateIndex(newIndex);
           }
-        }, 150);
+        }, slideTransitionDuration);
       } else {
         slideReset(1);
       }
@@ -215,10 +222,15 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   // Initialize the slider
   useLayoutEffect(() => {
     if (!wrapperEl.current) return;
+
     const el = wrapperEl.current;
+
+    const containerStyles = getComputedStyle(el);
+    const gap = parseFloat(containerStyles.gap || "0");
+
     const t = getSlideOffset(1, el);
-    const dx = type === SlideType.HORIZONTAL ? t : 0;
-    const dy = type === SlideType.VERTICAL ? t : 0;
+    const dx = type === SlideType.HORIZONTAL ? t - gap : 0;
+    const dy = type === SlideType.VERTICAL ? t - gap : 0;
     el.style.transitionDuration = `0ms`;
     el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
   }, [getSlideOffset, type, virtualList]); //need also a recalculated position when a virtualist is changed.
@@ -228,7 +240,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
     <div className="h-screen">
       <div className="touch-none h-full w-full transition-[height] duration-0 relative overflow-hidden  horizontal">
         <div
-          className={`relative h-full w-full flex ${
+          className={`relative h-full w-full flex gap-6 ${
             type === SlideType.VERTICAL && "flex-col"
           }`}
           style={{
@@ -256,7 +268,7 @@ const SlideItem = ({
   return (
     <div
       className={cn(
-        "relative h-[90%] mb-4 w-full flex-shrink-0 animate-fadeIn",
+        "relative h-[90%] w-full flex-shrink-0 animate-fadeIn",
         className
       )}
     >
@@ -266,8 +278,3 @@ const SlideItem = ({
 };
 
 export { SlideComponent, SlideItem };
-{
-  /* <SlideItem key={item.imageUrlPath} className="relative h-[100lvh] flex items-start">
-              <VideoCard item={item}></VideoCard>
-            </SlideItem> */
-}
