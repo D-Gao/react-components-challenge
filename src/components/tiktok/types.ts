@@ -1,0 +1,52 @@
+type BasicTrack = {
+  amazon_url: string | null;
+  apple_url: string | null;
+  artist: string | null;
+  bets_count: number | null;
+  buzz_score: number | null;
+  competition_id: string | null;
+  created_at: string;
+  deezer_url: string | null;
+  description: string | null;
+  dsp_streams_total: number | null;
+  explicit: string | null;
+  general_score: number | null;
+  genre: string | null;
+  id: string;
+  instagram_id: string | null;
+  interactions_count: number | null;
+  language: string | null;
+  product_id: string | null;
+  ranking_buzz: number | null;
+  ranking_dsp_streams: number | null;
+  ranking_main: number | null;
+  recording_year: string | null;
+  spotify_url: string | null;
+  start_preview: string;
+  streams_score: number | null;
+  tiktok_id: string | null;
+  title: string;
+  track_origin: string | null;
+  youtube_url: string | null;
+};
+type Artist = {
+  created_at: string;
+  description: string | null;
+  email: string;
+  facebook_username: string | null;
+  id: string;
+  instagram_username: string | null;
+  locale: string;
+  marketing_consent: boolean | null;
+  name: string | null;
+  soundcloud_username: string | null;
+  spotify_username: string | null;
+  tiktok_username: string | null;
+  updated_at: string | null;
+  username: string | null;
+  x_username: string | null;
+};
+
+export type Track = Omit<BasicTrack, "artist"> & {
+  artist: Artist;
+};
