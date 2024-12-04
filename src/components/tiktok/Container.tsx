@@ -7,7 +7,7 @@ type Props = {
 
 const Container: FC<Props> = ({ track }) => {
   return (
-    <div className="border w-[50vw] h-full rounded-xl bg-[#1D1D1B] p-4 flex flex-col gap-4">
+    <div className="border w-full h-full rounded-xl bg-[#1D1D1B] p-4 flex flex-col gap-4">
       <img
         draggable={false}
         className=" rounded-lg"
@@ -23,7 +23,12 @@ const Container: FC<Props> = ({ track }) => {
       </div>
 
       <div className="grid grid-cols-2 w-full gap-2">
-        <button className=" bg-white w-full rounded-sm text-black px-6 py-2">
+        <button
+          className=" bg-white w-full rounded-sm text-black px-6 py-2"
+          onClick={() => {
+            console.log("clicked");
+          }}
+        >
           Earn on social
         </button>
         <button className="bg-yellow-400 w-full rounded-sm px-6 py-">

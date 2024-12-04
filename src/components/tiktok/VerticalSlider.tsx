@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import React, {
   ReactNode,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -58,12 +59,11 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
 
   //based on the curernt index update the virtual list
   const virtualList = useMemo(() => {
-    if (items.length <= 4) {
+    if (items.length <= 3) {
       return items;
     } else {
       const start = (currentIndex - 1 + items.length) % items.length;
       const end = (currentIndex + 1) % items.length;
-      const end2 = (currentIndex + 2) % items.length;
       return [items[start], items[currentIndex], items[end]];
     }
   }, [currentIndex, items]);
@@ -220,9 +220,8 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   };
 
   // Initialize the slider
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!wrapperEl.current) return;
-
     const el = wrapperEl.current;
     const t = getSlideOffset(1, el);
     const dx = type === SlideType.HORIZONTAL ? t : 0;
@@ -233,7 +232,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
 
   // Render component
   return (
-    <div className="h-screen">
+    <div className="h-full">
       <div className="touch-none h-full w-full transition-[height] duration-0 relative overflow-hidden  horizontal">
         <div
           className={`relative h-full w-full flex gap-6 ${

@@ -63,11 +63,21 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        slideIn: {
+          "0%": { transform: "translate(-50%, 50%)", opacity: "0" }, // Start off-screen to the right
+          "100%": { transform: "translate(-50%, -50%)", opacity: "1" }, // End at the original position
+        },
+        slideOut: {
+          "0%": { transform: "translate(-50%, -50%)" }, // Start at the original position
+          "100%": { transform: "translate(-50%, 50%)" }, // End off-screen to the right
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         fadeIn: "fadeIn 0.3s ease-in-out",
+        slideIn: "slideIn 0.3s ease-out forwards",
+        slideOut: "slideOut 0.3s ease-out forwards",
       },
     },
   },
