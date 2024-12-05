@@ -11,10 +11,10 @@ const Container: FC<Props> = ({ track }) => {
       <img
         draggable={false}
         className=" rounded-lg"
-        src={`https://ixwoqmuatxxtenrlpjed.supabase.co/storage/v1/render/image/public/entry_cover_art/${track.id}.jpg?width=366&height=366&quality=20`}
+        src={`https://ixwoqmuatxxtenrlpjed.supabase.co/storage/v1/render/image/public/entry_cover_art/${track.id}.jpg`}
         style={{
-          userSelect: "none" /* Prevents selection */,
-          pointerEvents: "none" /* Prevents interaction */,
+          userSelect: "none",
+          pointerEvents: "none",
         }}
       />
       <div className="bg-[#FFFFFF1A] flex-grow rounded-lg">
