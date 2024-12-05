@@ -6,25 +6,23 @@ import { cn } from "@/lib/utils";
 import React, {
   ReactNode,
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 
-/* import SlideItem from './SlideItem';
-import VideoCard from './VideoCard'; */
-
 export enum SlideType {
   HORIZONTAL = 0,
   VERTICAL = 1,
 }
 
-const slideTransitionDuration = 150;
+const slideTransitionDuration = 200;
+
+const forceThreshold = 50;
 
 interface SlideComponentProps<T> {
-  items: T[] | undefined; // eslint-disable-line @typescript-eslint/no-explicit-any
+  items: T[] | undefined;
   index?: number;
   name?: string;
   type?: SlideType;
@@ -109,7 +107,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
         if (offsetWidths.length) {
           return -offsetWidths.reduce((a, b) => a + b + gap, 0);
         }
-        return 0;
+        return gap;
       } else {
         // Vertical sliding logic can be added here
         let heights: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -118,7 +116,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
         });
         heights = heights.slice(0, index);
         if (heights.length) return -heights.reduce((a, b) => a + b + gap);
-        return 0;
+        return gap;
       }
     },
     [type]
@@ -220,7 +218,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   };
 
   // Initialize the slider
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!wrapperEl.current) return;
     const el = wrapperEl.current;
     const t = getSlideOffset(1, el);
@@ -229,6 +227,72 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
     el.style.transitionDuration = `0ms`;
     el.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
   }, [getSlideOffset, type, virtualList]); //need also a recalculated position when a virtualist is changed.
+
+  const handleScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+    //e.preventDefault();
+    if (!wrapperEl.current || disableManualTouch.current) return;
+    const forceValue = e.deltaY;
+
+    console.log(forceValue);
+    const canSwipe = Math.abs(forceValue) >= forceThreshold;
+
+    /**
+     * if swiperable set a flag for reject future handlescrolls event
+     * and then if everything is done reset the flag
+     */
+    if (!canSwipe) return;
+
+    disableManualTouch.current = true;
+    const isNextDirection = forceValue > 0 ? true : false;
+
+    /**
+     * perform actual swipe animation and index update
+     */
+    const newIndex = isNextDirection
+      ? getNextIndex(currentIndex, +1)
+      : getNextIndex(currentIndex, -1);
+    disableManualTouch.current = true;
+    slideReset(isNextDirection ? 2 : 0);
+
+    setTimeout(() => {
+      /* disableManualTouch.current = false; */
+      if (onUpdateIndex) {
+        onUpdateIndex(newIndex);
+      }
+    }, slideTransitionDuration);
+
+    setTimeout(() => {
+      disableManualTouch.current = false;
+    }, slideTransitionDuration * 2);
+
+    return;
+    /* const el = wrapperEl.current;
+    const delta = e.deltaY;
+    const isVertical = type === SlideType.VERTICAL;
+
+    // Calculate the current offset
+    const currentTransform = getComputedStyle(el).transform;
+    const matrix = new DOMMatrix(currentTransform);
+    const currentOffset = isVertical ? matrix.m42 : matrix.m41;
+
+    // Define limits
+    const maxOffset = 0; // Example: top/left edge
+    const minOffset = isVertical
+      ? -(el.scrollHeight - el.clientHeight) // Total height minus visible height
+      : -(el.scrollWidth - el.clientWidth); // Total width minus visible width
+
+    // Calculate new offset with limits
+    const newOffset = Math.min(
+      Math.max(currentOffset - delta, minOffset),
+      maxOffset
+    );
+
+    // Apply the transform
+    el.style.transitionDuration = `0ms`;
+    el.style.transform = isVertical
+      ? `translate3d(0, ${newOffset}px, 0)`
+      : `translate3d(${newOffset}px, 0, 0)`; */
+  };
 
   // Render component
   return (
@@ -240,11 +304,15 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
           }`}
           style={{
             willChange: "transform",
+            scrollBehavior: "auto",
+            overscrollBehavior: "contain",
           }}
           ref={wrapperEl}
           onPointerDown={(e) => slidePointerDown(e)}
           onPointerMove={slidePointerMove}
           onPointerUp={slidePointerUp}
+          onPointerOut={slidePointerUp}
+          onWheel={handleScroll}
         >
           {virtualList.map((item) => children({ item }))}
         </div>
