@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 //uselayout init 3 video tags with corrisponding video src base on the input index
 //update the virtual list of 3 element based on the slide direction
-//the updateed virtual list will try to rerender the video element with the same video src at the center element so does this video element been rerendered or not since the key is the same as the video src
+//the updated virtual list will try to rerender the video element with the same video src at the center element so does this video element been rerendered or not since the key is the same as the video src
 import { cn } from "@/lib/utils";
 import React, {
   ReactNode,
@@ -17,20 +17,16 @@ export enum SlideType {
   VERTICAL = 1,
 }
 
-const slideTransitionDuration = 200;
-
-const forceThreshold = 50;
-
 interface SlideComponentProps<T> {
   items: T[] | undefined;
   index?: number;
+  slideTransitionDuration?: number;
+  forceThreshold?: number;
   name?: string;
   type?: SlideType;
   autoplay?: boolean;
   indicator?: boolean;
   changeActiveIndexUseAnim?: boolean;
-  //onUpdateIndex?: (newIndex: number) => void;
-  //children?: ReactNode;
   children: (props: { item: T }) => ReactNode; // Render props function receives item of type T
 }
 
@@ -41,7 +37,14 @@ interface StartCoordinates {
 }
 
 const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
-  const { items = [], index = 0, type = SlideType.VERTICAL, children } = props;
+  const {
+    items = [],
+    index = 0,
+    type = SlideType.VERTICAL,
+    slideTransitionDuration = 300,
+    forceThreshold = 50,
+    children,
+  } = props;
   //the real index not virtual one
   const [currentIndex, onUpdateIndex] = useState(index);
 
@@ -54,6 +57,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   const isDown = useRef<boolean>(false);
   const start = useRef<StartCoordinates>({ x: 0, y: 0, time: 0 });
   const move = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  //const keyDownTImeout = useRef<NodeJS.Timeout>();
 
   //based on the curernt index update the virtual list
   const virtualList = useMemo(() => {
@@ -231,11 +235,9 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   const handleScroll = (e: React.WheelEvent<HTMLDivElement>) => {
     //e.preventDefault();
     if (!wrapperEl.current || disableManualTouch.current) return;
+
     const forceValue = e.deltaY;
-
-    console.log(forceValue);
     const canSwipe = Math.abs(forceValue) >= forceThreshold;
-
     /**
      * if swiperable set a flag for reject future handlescrolls event
      * and then if everything is done reset the flag
@@ -260,41 +262,35 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
         onUpdateIndex(newIndex);
       }
     }, slideTransitionDuration);
-
     setTimeout(() => {
       disableManualTouch.current = false;
     }, slideTransitionDuration * 2);
-
     return;
-    /* const el = wrapperEl.current;
-    const delta = e.deltaY;
-    const isVertical = type === SlideType.VERTICAL;
-
-    // Calculate the current offset
-    const currentTransform = getComputedStyle(el).transform;
-    const matrix = new DOMMatrix(currentTransform);
-    const currentOffset = isVertical ? matrix.m42 : matrix.m41;
-
-    // Define limits
-    const maxOffset = 0; // Example: top/left edge
-    const minOffset = isVertical
-      ? -(el.scrollHeight - el.clientHeight) // Total height minus visible height
-      : -(el.scrollWidth - el.clientWidth); // Total width minus visible width
-
-    // Calculate new offset with limits
-    const newOffset = Math.min(
-      Math.max(currentOffset - delta, minOffset),
-      maxOffset
-    );
-
-    // Apply the transform
-    el.style.transitionDuration = `0ms`;
-    el.style.transform = isVertical
-      ? `translate3d(0, ${newOffset}px, 0)`
-      : `translate3d(${newOffset}px, 0, 0)`; */
   };
 
-  // Render component
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (disableManualTouch.current) return;
+    let isNextDirection = false;
+    if (e.key === "ArrowUp") {
+      isNextDirection = false;
+    } else if (e.key === "ArrowDown") {
+      isNextDirection = true;
+    } else {
+      return;
+    }
+    disableManualTouch.current = true;
+    const newIndex = isNextDirection
+      ? getNextIndex(currentIndex, +1)
+      : getNextIndex(currentIndex, -1);
+    slideReset(isNextDirection ? 2 : 0);
+    setTimeout(() => {
+      disableManualTouch.current = false;
+      if (onUpdateIndex) {
+        onUpdateIndex(newIndex);
+      }
+    }, slideTransitionDuration);
+  };
+
   return (
     <div className="h-full">
       <div className="touch-none h-full w-full transition-[height] duration-0 relative overflow-hidden  horizontal">
@@ -306,6 +302,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
             willChange: "transform",
             scrollBehavior: "auto",
             overscrollBehavior: "contain",
+            outline: "none",
           }}
           ref={wrapperEl}
           onPointerDown={(e) => slidePointerDown(e)}
@@ -313,6 +310,8 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
           onPointerUp={slidePointerUp}
           onPointerOut={slidePointerUp}
           onWheel={handleScroll}
+          onKeyDown={(e) => handleKeyDown(e)}
+          tabIndex={0}
         >
           {virtualList.map((item) => children({ item }))}
         </div>
