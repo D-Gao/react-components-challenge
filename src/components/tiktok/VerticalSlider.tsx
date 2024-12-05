@@ -57,7 +57,6 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   const isDown = useRef<boolean>(false);
   const start = useRef<StartCoordinates>({ x: 0, y: 0, time: 0 });
   const move = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  //const keyDownTImeout = useRef<NodeJS.Timeout>();
 
   //based on the curernt index update the virtual list
   const virtualList = useMemo(() => {
@@ -95,7 +94,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
     }
     return index;
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const getSlideOffset = useCallback(
     (index: number, el: HTMLDivElement): number => {
       const containerStyles = getComputedStyle(el);
@@ -165,8 +164,8 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
     const canSlideRes = canSlide();
 
     if (canSlideRes) {
-      const isNextDirection =
-        type === SlideType.VERTICAL ? move.current.y < 0 : move.current.x < 0;
+      /* const isNextDirection =
+        type === SlideType.VERTICAL ? move.current.y < 0 : move.current.x < 0; */
       e.stopPropagation();
       const offsetDimension = getSlideOffset(1, el);
       //获取偏移量
@@ -271,9 +270,9 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (disableManualTouch.current) return;
     let isNextDirection = false;
-    if (e.key === "ArrowUp") {
+    if (e.key === "ArrowUp" || e.key === "w") {
       isNextDirection = false;
-    } else if (e.key === "ArrowDown") {
+    } else if (e.key === "ArrowDown" || e.key === "s") {
       isNextDirection = true;
     } else {
       return;
@@ -302,6 +301,7 @@ const SlideComponent = <T,>(props: SlideComponentProps<T>) => {
             willChange: "transform",
             scrollBehavior: "auto",
             overscrollBehavior: "contain",
+            transitionTimingFunction: "ease-out",
             outline: "none",
           }}
           ref={wrapperEl}

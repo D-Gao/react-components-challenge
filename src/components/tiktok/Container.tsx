@@ -7,15 +7,24 @@ type Props = {
 
 const Container: FC<Props> = ({ track }) => {
   return (
-    <div className="border w-full h-full rounded-xl bg-[#1D1D1B] p-4 flex flex-col gap-4">
+    <div className="border w-full h-full rounded-xl bg-[#1D1D1B] p-4 flex flex-col gap-4 cursor-grab">
       <img
         draggable={false}
         className=" rounded-lg"
-        src={`https://ixwoqmuatxxtenrlpjed.supabase.co/storage/v1/render/image/public/entry_cover_art/${track.id}.jpg`}
+        src={`https://ixwoqmuatxxtenrlpjed.supabase.co/storage/v1/render/image/public/entry_cover_art/${track.id}.jpg?width=366&height=366&quality=20`}
+        style={{
+          userSelect: "none" /* Prevents selection */,
+          pointerEvents: "none" /* Prevents interaction */,
+        }}
       />
       <div className="bg-[#FFFFFF1A] flex-grow rounded-lg">
         <div className="flex h-full justify-center items-center">
-          <div>
+          <div
+            style={{
+              userSelect: "none" /* Prevents selection */,
+              pointerEvents: "none" /* Prevents interaction */,
+            }}
+          >
             <p className="text-center">{track.title}</p>
             <p className="text-center">{track.artist.name}</p>
           </div>
