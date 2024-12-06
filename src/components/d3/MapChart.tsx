@@ -19,6 +19,7 @@ const MapChart = () => {
     if (!svgRef.current) return;
     const width = 800;
     const height = 450;
+
     // Select SVG
     const svg = d3
       .select<SVGSVGElement, unknown>(svgRef.current)
@@ -30,10 +31,9 @@ const MapChart = () => {
 
     // Projection and Path
     const projection = d3
-      .geoOrthographic()
-      .scale(width / 1.3 / Math.PI)
-      .translate([width / 2, height / 2])
-      .clipAngle(90);
+      .geoNaturalEarth1()
+      .scale(width / 1.5 / Math.PI)
+      .translate([width / 2.21, height / 1.8]);
 
     const pathGenerator = d3.geoPath().projection(projection);
 
@@ -71,45 +71,19 @@ const MapChart = () => {
       });
 
     // Define zoom behavior
-    /* const zoom = d3
+    const zoom = d3
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 8])
+      .translateExtent([
+        [0, 0],
+        [width, height],
+      ])
       .on("zoom", (event) => {
         svg.selectAll(".country").attr("transform", event.transform);
-      }); */
-
-    // Apply zoom to the SVG
-    //svg.call(zoom);
-
-    let lambda = 0; // initial rotation longitude
-    let phi = 0; // initial rotation latitude
-    let previousPos: number[] = [];
-
-    const drag = d3
-      .drag<SVGSVGElement, unknown>()
-      .on("start", (event) => {
-        previousPos = [event.x, event.y];
-      })
-      .on("drag", (event) => {
-        const dx = event.x - previousPos[0];
-        const dy = event.y - previousPos[1];
-
-        // Adjust these factors to control rotation speed
-        lambda += dx * 0.5;
-        phi -= dy * 0.5;
-
-        // Update projection rotation
-        projection.rotate([lambda, phi]);
-
-        // Redraw paths
-        svg
-          .selectAll(".country")
-          .attr("d", (d) => pathGenerator(d as d3.GeoPermissibleObjects) || "");
-
-        previousPos = [event.x, event.y];
       });
 
-    svg.call(drag);
+    // Apply zoom to the SVG
+    svg.call(zoom);
   }, []);
 
   return (
