@@ -1,5 +1,17 @@
+import { PlayerDrawer } from "./PlayerDrawer";
+
 const Home = () => {
-  return <div>Home</div>;
+  return (
+    <PlayerDrawer>
+      <button
+        onClick={() => {
+          console.log("sasa");
+        }}
+      >
+        dsadas
+      </button>
+    </PlayerDrawer>
+  );
 };
 
 export default Home;

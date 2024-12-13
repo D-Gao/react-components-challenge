@@ -7,6 +7,8 @@ import worldData from "./data/world.json";
 //import { countryData } from "./data/countryData";
 
 const MapChart = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [tooltip, setTooltip] = useState({
     visible: false,
@@ -31,9 +33,9 @@ const MapChart = () => {
 
     // Projection and Path
     const projection = d3
-      .geoNaturalEarth1()
-      .scale(width / 1.5 / Math.PI)
-      .translate([width / 2.21, height / 1.8]);
+      .geoMercator()
+      .scale(width / 2 / Math.PI)
+      .translate([width / 2, height / 1.5]);
 
     const pathGenerator = d3.geoPath().projection(projection);
 
@@ -73,7 +75,7 @@ const MapChart = () => {
     // Define zoom behavior
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 8])
+      .scaleExtent([1, 100])
       .translateExtent([
         [0, 0],
         [width, height],
@@ -87,14 +89,28 @@ const MapChart = () => {
   }, []);
 
   return (
-    <div style={{ position: "relative" }}>
+    <div
+      style={{ position: "relative", overflow: "hidden" }}
+      ref={containerRef}
+    >
       <svg ref={svgRef}></svg>
       {tooltip.visible && (
         <div
+          ref={tooltipRef}
           style={{
             position: "absolute",
-            top: tooltip.y,
-            left: tooltip.x,
+            top: Math.min(
+              Math.max(tooltip.y, 0), // Prevent overflow at the top
+              containerRef.current!.offsetHeight -
+                (tooltipRef.current?.getBoundingClientRect().height ??
+                  containerRef.current!.offsetHeight) // Prevent overflow at the bottom
+            ),
+            left: Math.min(
+              Math.max(tooltip.x, 0), // Prevent overflow on the left
+              containerRef.current!.offsetWidth -
+                (tooltipRef.current?.getBoundingClientRect().width ??
+                  containerRef.current!.offsetWidth) // Prevent overflow on the right
+            ),
             padding: "5px 10px",
             background: "#000",
             color: "#fff",
