@@ -15,6 +15,7 @@
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-visually-hidden": "^1.1.0",
     "@tanstack/react-virtual": "^3.10.9",
+    "@wavesurfer/react": "^1.0.7",
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
     "lucide-react": "^0.456.0",
