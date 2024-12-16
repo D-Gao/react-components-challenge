@@ -1,7 +1,7 @@
 import Analyzer from "./Analyzer";
 
 const MusicProgressBar = () => {
-  return <Analyzer />;
+  return <Analyzer height={100} />;
 };
 
 export default MusicProgressBar;

@@ -68,4 +68,9 @@
     stroke: #222;
     fill: #555;
   }
+
+  #waveform ::part(region) {
+    /* background-color: rgba(0, 0, 100, 0.25) !important; */
+    pointer-events: none !important;
+  }
 }
