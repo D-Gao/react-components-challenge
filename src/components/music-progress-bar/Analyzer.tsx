@@ -13,7 +13,7 @@ type Props = {
   height: number;
 };
 const dpr = window.devicePixelRatio || 1; // Get the DPR
-const Analyzer = ({ height = 100 }: Props) => {
+const Analyzer = ({ height = 200 }: Props) => {
   const waveSurferRef = useRef<WaveSurfer | null>(null); // Ref to store the WaveSurfer instance
   const containerRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -170,7 +170,7 @@ const Analyzer = ({ height = 100 }: Props) => {
 
   return (
     <>
-      <div className="relative h-[100px]">
+      <div className="relative">
         <div ref={containerRef} id="waveform" />
       </div>
       <p>Current audio: {audioUrls[urlIndex]}</p>

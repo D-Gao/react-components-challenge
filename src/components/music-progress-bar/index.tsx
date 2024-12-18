@@ -1,7 +1,7 @@
-import Analyzer from "./Analyzer";
-
+import CustomAnalyzer from "./CustomAnalyzer";
+import { tracks as audioUrls } from "./data";
 const MusicProgressBar = () => {
-  return <Analyzer height={100} />;
+  return <CustomAnalyzer url={audioUrls[0]} />;
 };
 
 export default MusicProgressBar;
