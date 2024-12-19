@@ -71,6 +71,14 @@ export default {
           "0%": { transform: "translate(-50%, -50%)" }, // Start at the original position
           "100%": { transform: "translate(-50%, 50%)" }, // End off-screen to the right
         },
+        rotatingEclipse: {
+          "0%": {
+            transform: "translateX(0)",
+          },
+          "100%": {
+            transform: "translateX(var(--trans-x, 100%))",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -78,6 +86,7 @@ export default {
         fadeIn: "fadeIn 0.3s ease-in-out",
         slideIn: "slideIn 0.3s ease-out forwards",
         slideOut: "slideOut 0.3s ease-out forwards",
+        rotatingEclipse: "rotatingEclipse 5s linear infinite alternate",
       },
     },
   },

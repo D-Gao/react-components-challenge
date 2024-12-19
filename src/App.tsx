@@ -4,6 +4,7 @@ import Home from "./components/home/Home";
 import Tiktok from "./components/tiktok";
 import D3 from "./components/d3";
 import MusicProgressBar from "./components/music-progress-bar";
+import RotatingEclipse from "./components/rotating-eclipse";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/tiktok" element={<Tiktok />} />
         <Route path="/d3" element={<D3 />} />
         <Route path="/music-progressbar" element={<MusicProgressBar />} />
+        <Route path="/rotating-eclipse" element={<RotatingEclipse />} />
       </Routes>
     </BrowserRouter>
   );
