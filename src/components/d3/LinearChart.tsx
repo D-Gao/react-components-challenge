@@ -56,7 +56,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({ data }) => {
     // Linear generator
     const lineGenerator = d3
       .line<{ date: Date; value: number }>()
-      .curve(d3.curveBasis)
+      .curve(d3.curveLinear)
       .x((d) => x(d.date)!)
       .y((d) => y(d.value));
 
