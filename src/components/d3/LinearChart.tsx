@@ -9,9 +9,13 @@ type DataPoint = {
 
 type ZoomableAreaChartProps = {
   data: DataPoint[];
+  data2: DataPoint[];
 };
 
-const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({ data }) => {
+const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
+  data = [],
+  data2 = [],
+}) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
@@ -21,17 +25,26 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({ data }) => {
       date: new Date(d.date),
       value: d.value,
     }));
+
+    const parsedData2 = data2.map((d) => ({
+      date: new Date(d.date),
+      value: d.value,
+    }));
+
     const breakpoint = new Date("2001-09-01");
     const normalData = parsedData.filter((d) => d.date <= breakpoint);
     const dashedData = parsedData.filter((d) => d.date >= breakpoint);
+
+    const normalData2 = parsedData2.filter((d) => d.date <= breakpoint);
+    const dashedData2 = parsedData2.filter((d) => d.date >= breakpoint);
 
     // Chart dimensions
     const width = 928;
     const height = 500;
     const marginTop = 20;
-    const marginRight = 20;
+    const marginRight = 40;
     const marginBottom = 30;
-    const marginLeft = 30;
+    const marginLeft = 40;
 
     // Scales
     const x = d3
@@ -42,6 +55,12 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({ data }) => {
     const y = d3
       .scaleLinear()
       .domain([0, d3.max(parsedData, (d) => d.value) ?? 0])
+      .nice()
+      .range([height - marginBottom, marginTop]);
+
+    const y2 = d3
+      .scaleLinear()
+      .domain([0, d3.max(parsedData2, (d) => d.value) ?? 0])
       .nice()
       .range([height - marginBottom, marginTop]);
 
@@ -159,6 +178,21 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({ data }) => {
           .attr("text-anchor", "start")
           .attr("font-weight", "bold")
           .text("Flights")
+      );
+
+    svg
+      .append("g")
+      .attr("transform", `translate(${width - marginRight}, 0)`)
+      .call(d3.axisRight(y2).ticks(null, "s"))
+      .call((g) => g.select(".domain").remove())
+      .call((g) =>
+        g
+          .select(".tick:last-of-type text")
+          .clone()
+          .attr("x", 3)
+          .attr("text-anchor", "start")
+          .attr("font-weight", "bold")
+          .text("Streamings")
       );
 
     // Zoom behavior
