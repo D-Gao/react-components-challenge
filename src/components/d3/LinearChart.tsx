@@ -305,11 +305,21 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
             const i = bisectDate(parsedData, correspondingDate);
             const d0 = parsedData[i - 1];
             const d1 = parsedData[i];
+
+            const p0 = parsedData2[i - 1];
+            const p1 = parsedData2[i];
+
             const currentPoint =
               correspondingDate.getTime() - d0["date"].getTime() >
               d1["date"].getTime() - correspondingDate.getTime()
                 ? d1
                 : d0;
+
+            const currentPoint2 =
+              correspondingDate.getTime() - p0["date"].getTime() >
+              p1["date"].getTime() - correspondingDate.getTime()
+                ? p1
+                : p0;
 
             focus.attr(
               "transform",
@@ -317,6 +327,14 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
                 currentPoint["value"]
               )})`
             );
+
+            focus2.attr(
+              "transform",
+              `translate(${xz(currentPoint2["date"])}, ${y2(
+                currentPoint2["value"]
+              )})`
+            );
+
             focus
               .select("line.x")
               .attr("x1", 0)
@@ -329,6 +347,20 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
               .attr("x2", 0)
               .attr("y1", 0)
               .attr("y2", height - y(currentPoint["value"]) - marginBottom);
+
+            focus2
+              .select("line.x")
+              .attr("x1", 0)
+              .attr("x2", width - xz(currentPoint["date"]) - marginRight)
+              .attr("y1", 0)
+              .attr("y2", 0);
+            focus2
+              .select("line.y")
+              .attr("x1", 0)
+              .attr("x2", 0)
+              .attr("y1", 0)
+              .attr("y2", height - y2(currentPoint["value"]) - marginBottom);
+
             updateLegends(currentPoint);
           }
         );
@@ -357,12 +389,20 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     // renders x and y crosshair
     const focus = svg
       .append("g")
-
       .attr("class", "focus")
       .style("display", "none");
     focus.append("circle").attr("r", 4.5).attr("fill", "white");
     focus.append("line").classed("x", true);
     focus.append("line").classed("y", true);
+
+    const focus2 = svg
+      .append("g")
+      .attr("class", "focus2")
+      .style("display", "none");
+
+    focus2.append("circle").attr("r", 4.5).attr("fill", "white");
+    focus2.append("line").classed("x", true);
+    focus2.append("line").classed("y", true);
 
     const overlayRect = svg
       .append("rect")
@@ -371,9 +411,15 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       .attr("y", marginTop)
       .attr("width", width - marginLeft - marginRight) // Match clip path width
       .attr("height", height - marginTop - marginBottom) // Match clip path height
-      .on("mouseover", () => focus.style("display", null))
-      .on("mouseout", () => focus.style("display", "none"))
-      .on("mousemove", generateCrosshair);
+      .on("mouseover", () => {
+        focus.style("display", null);
+        focus2.style("display", null);
+      })
+      .on("mouseout", () => {
+        focus.style("display", "none");
+        focus2.style("display", "none");
+      });
+    /* .on("mousemove", generateCrosshair); */
     d3.select(".overlay").style("fill", "none");
     d3.select(".overlay").style("pointer-events", "all");
     d3.selectAll(".focus line").style("fill", "none");
@@ -381,10 +427,15 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     d3.selectAll(".focus line").style("stroke-width", "1.5px");
     d3.selectAll(".focus line").style("stroke-dasharray", "3 3");
 
+    d3.selectAll(".focus2 line").style("fill", "none");
+    d3.selectAll(".focus2 line").style("stroke", "#67809f");
+    d3.selectAll(".focus2 line").style("stroke-width", "1.5px");
+    d3.selectAll(".focus2 line").style("stroke-dasharray", "3 3");
+
     const bisectDate = d3.bisector(
       (d: { date: Date; value: number }) => d.date
     ).left;
-    function generateCrosshair(this: SVGRectElement, event: MouseEvent) {
+    /*  function generateCrosshair(this: SVGRectElement, event: MouseEvent) {
       //returns corresponding value from the domain
       const correspondingDate = x.invert(d3.pointer(event, this)[0]);
       //gets insertion point
@@ -414,7 +465,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         .attr("y1", 0)
         .attr("y2", height - y(currentPoint["value"]));
       updateLegends(currentPoint);
-    }
+    } */
 
     svg
       .call(zoom)
