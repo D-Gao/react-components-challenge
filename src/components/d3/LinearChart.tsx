@@ -284,13 +284,42 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
           lineGenerator2.x((d) => xz(d.date)!)
         );
 
-        /* svg
-          .selectAll("path")
-          .attr("d", (d, i) =>
-            i === 0
-              ? lineGenerator.x((d) => xz(d.date)!)
-              : lineGenerator.x((d) => xz(d.date)!)
-          ); */
+        overlayRect.on(
+          "mousemove",
+          function (this: SVGRectElement, event: MouseEvent) {
+            //returns corresponding value from the domain
+            const correspondingDate = xz.invert(d3.pointer(event, this)[0]);
+            //gets insertion point
+            const i = bisectDate(parsedData, correspondingDate);
+            const d0 = parsedData[i - 1];
+            const d1 = parsedData[i];
+            const currentPoint =
+              correspondingDate.getTime() - d0["date"].getTime() >
+              d1["date"].getTime() - correspondingDate.getTime()
+                ? d1
+                : d0;
+
+            focus.attr(
+              "transform",
+              `translate(${xz(currentPoint["date"])}, ${y(
+                currentPoint["value"]
+              )})`
+            );
+            focus
+              .select("line.x")
+              .attr("x1", 0)
+              .attr("x2", width - xz(currentPoint["date"]))
+              .attr("y1", 0)
+              .attr("y2", 0);
+            focus
+              .select("line.y")
+              .attr("x1", 0)
+              .attr("x2", 0)
+              .attr("y1", 0)
+              .attr("y2", height - y(currentPoint["value"]));
+            /* updateLegends(currentPoint); */
+          }
+        );
         gx.call(xAxis, xz);
       });
 
@@ -313,6 +342,68 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     animatePath(pathTotal);
     animatePath(pathTotal2);
 
+    // renders x and y crosshair
+    const focus = svg
+      .append("g")
+
+      .attr("class", "focus")
+      .style("display", "none");
+    focus.append("circle").attr("r", 4.5).attr("fill", "white");
+    focus.append("line").classed("x", true);
+    focus.append("line").classed("y", true);
+
+    const overlayRect = svg
+      .append("rect")
+      .attr("class", "overlay")
+      .attr("x", marginLeft)
+      .attr("y", marginTop)
+      .attr("width", width - marginLeft - marginRight) // Match clip path width
+      .attr("height", height - marginTop - marginBottom) // Match clip path height
+      .on("mouseover", () => focus.style("display", null))
+      .on("mouseout", () => focus.style("display", "none"))
+      .on("mousemove", generateCrosshair);
+    d3.select(".overlay").style("fill", "none");
+    d3.select(".overlay").style("pointer-events", "all");
+    d3.selectAll(".focus line").style("fill", "none");
+    d3.selectAll(".focus line").style("stroke", "#67809f");
+    d3.selectAll(".focus line").style("stroke-width", "1.5px");
+    d3.selectAll(".focus line").style("stroke-dasharray", "3 3");
+
+    const bisectDate = d3.bisector(
+      (d: { date: Date; value: number }) => d.date
+    ).left;
+    function generateCrosshair(this: SVGRectElement, event: MouseEvent) {
+      //returns corresponding value from the domain
+      const correspondingDate = x.invert(d3.pointer(event, this)[0]);
+      //gets insertion point
+      const i = bisectDate(parsedData, correspondingDate);
+      const d0 = parsedData[i - 1];
+      const d1 = parsedData[i];
+      const currentPoint =
+        correspondingDate.getTime() - d0["date"].getTime() >
+        d1["date"].getTime() - correspondingDate.getTime()
+          ? d1
+          : d0;
+
+      focus.attr(
+        "transform",
+        `translate(${x(currentPoint["date"])}, ${y(currentPoint["value"])})`
+      );
+      focus
+        .select("line.x")
+        .attr("x1", 0)
+        .attr("x2", width - x(currentPoint["date"]))
+        .attr("y1", 0)
+        .attr("y2", 0);
+      focus
+        .select("line.y")
+        .attr("x1", 0)
+        .attr("x2", 0)
+        .attr("y1", 0)
+        .attr("y2", height - y(currentPoint["value"]));
+      /* updateLegends(currentPoint); */
+    }
+
     svg
       .call(zoom)
       .transition()
@@ -323,7 +414,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [data]);
+  }, [data, data2]);
 
   return (
     <div className=" relative w-full h-auto">
