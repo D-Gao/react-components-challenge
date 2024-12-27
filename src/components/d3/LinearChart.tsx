@@ -7,14 +7,21 @@ type DataPoint = {
   value: number;
 };
 
+type PricePoint = {
+  date: string;
+  price: number;
+};
+
 type ZoomableAreaChartProps = {
   data: DataPoint[];
   data2: DataPoint[];
+  priceData: PricePoint[];
 };
 
 const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
   data = [],
   data2 = [],
+  priceData = [],
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
@@ -29,6 +36,11 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     const parsedData2 = data2.map((d) => ({
       date: new Date(d.date),
       value: d.value,
+    }));
+
+    const parsedPriceData = priceData.map((d) => ({
+      date: new Date(d.date),
+      value: d.price,
     }));
 
     const breakpoint = new Date("2001-09-01");
@@ -308,7 +320,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
             focus
               .select("line.x")
               .attr("x1", 0)
-              .attr("x2", width - xz(currentPoint["date"]))
+              .attr("x2", -xz(currentPoint["date"]) + marginLeft)
               .attr("y1", 0)
               .attr("y2", 0);
             focus
@@ -316,8 +328,8 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
               .attr("x1", 0)
               .attr("x2", 0)
               .attr("y1", 0)
-              .attr("y2", height - y(currentPoint["value"]));
-            /* updateLegends(currentPoint); */
+              .attr("y2", height - y(currentPoint["value"]) - marginBottom);
+            updateLegends(currentPoint);
           }
         );
         gx.call(xAxis, xz);
@@ -392,7 +404,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       focus
         .select("line.x")
         .attr("x1", 0)
-        .attr("x2", width - x(currentPoint["date"]))
+        .attr("x2", -x(currentPoint["date"]))
         .attr("y1", 0)
         .attr("y2", 0);
       focus
@@ -401,7 +413,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         .attr("x2", 0)
         .attr("y1", 0)
         .attr("y2", height - y(currentPoint["value"]));
-      /* updateLegends(currentPoint); */
+      updateLegends(currentPoint);
     }
 
     svg
@@ -410,11 +422,36 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       .duration(750)
       .call(zoom.scaleTo, 4, [x(new Date("2001-09-01"))!, 0]);
 
+    const updateLegends = (currentData: { date: Date; value: number }) => {
+      d3.selectAll(".lineLegend").remove();
+      const legendKeys = Object.keys(data[0]);
+      const lineLegend = svg
+        .selectAll(".lineLegend")
+        .data(legendKeys)
+        .enter()
+        .append("g")
+        .attr("class", "lineLegend")
+        .attr("transform", (_d, i) => {
+          return `translate(${marginLeft}, ${height - 20 - (i + 1) * 30})`;
+        });
+      lineLegend
+        .append("text")
+        .text((d) => {
+          if (d === "date") {
+            return `${d}: ${currentData[d].toLocaleDateString()}`;
+          } else {
+            return `${d}: ${currentData["value"]}`;
+          }
+        })
+        .style("fill", "white")
+        .attr("transform", "translate(15,9)");
+    };
+
     // Cleanup function to remove the chart
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [data, data2]);
+  }, [data, data2, priceData]);
 
   return (
     <div className=" relative w-full h-auto">
