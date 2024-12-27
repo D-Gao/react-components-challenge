@@ -233,7 +233,27 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({ data }) => {
     };
   }, [data]);
 
-  return <svg ref={svgRef}></svg>;
+  return (
+    <div className=" relative w-full h-auto">
+      <svg ref={svgRef}></svg>
+      <div
+        className=" justify-center items-center gap-2"
+        style={{
+          position: "absolute",
+          display: "flex",
+          top: "10px", // Position text relative to the container
+          right: "20px",
+          fontSize: "14px", // Constant font size
+          fontWeight: "bold",
+          color: "white",
+        }}
+      >
+        <div className="w-4 h-3 bg-yellow-300"></div>
+        <p>=</p>
+        <p>Daily Price Track</p>
+      </div>
+    </div>
+  );
 };
 
 export default ZoomableAreaChart;
