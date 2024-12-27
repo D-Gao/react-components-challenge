@@ -47,9 +47,17 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     const marginLeft = 40;
 
     // Scales
-    const x = d3
+    /*  const x = d3
       .scaleUtc()
       .domain(d3.extent(parsedData, (d) => d.date) as [Date, Date])
+      .range([marginLeft, width - marginRight]); */
+
+    const x = d3
+      .scaleUtc()
+      .domain([
+        d3.min([...parsedData, ...parsedData2], (d) => d.date)!, // Minimum date from both datasets
+        d3.max([...parsedData, ...parsedData2], (d) => d.date)!, // Maximum date from both datasets
+      ])
       .range([marginLeft, width - marginRight]);
 
     const y = d3
@@ -78,6 +86,12 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       .curve(d3.curveLinear)
       .x((d) => x(d.date)!)
       .y((d) => y(d.value));
+
+    const lineGenerator2 = d3
+      .line<{ date: Date; value: number }>()
+      .curve(d3.curveLinear)
+      .x((d) => x(d.date)!)
+      .y((d) => y2(d.value));
 
     // SVG setup
     const svg = d3
@@ -151,6 +165,35 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       .attr("stroke-width", 1.5)
       .attr("d", lineGenerator);
 
+    const pathNormal2 = svg
+      .append("path")
+      .datum(normalData2)
+      .attr("clip-path", `url(#${clipId})`)
+      .attr("fill", "none")
+      .attr("stroke", "red")
+      .attr("stroke-width", 1.5)
+      .attr("d", lineGenerator2);
+
+    // Dashed line
+    const pathDashed2 = svg
+      .append("path")
+      .datum(dashedData2)
+      .attr("clip-path", `url(#${clipId})`)
+      .attr("fill", "none")
+      .attr("stroke", "red")
+      .attr("stroke-width", 1.5)
+      .attr("stroke-dasharray", "5,5")
+      .attr("d", lineGenerator2);
+
+    const pathTotal2 = svg
+      .append("path")
+      .datum(parsedData2)
+      .attr("clip-path", `url(#${clipId})`)
+      .attr("fill", "none")
+      .attr("stroke", "black")
+      .attr("stroke-width", 1.5)
+      .attr("d", lineGenerator2);
+
     // Axes
     const xAxis = (
       g: d3.Selection<SVGGElement, unknown, null, undefined>,
@@ -177,7 +220,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
           .attr("x", 3)
           .attr("text-anchor", "start")
           .attr("font-weight", "bold")
-          .text("Flights")
+          .text("Social Interaction")
       );
 
     svg
@@ -189,7 +232,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         g
           .select(".tick:last-of-type text")
           .clone()
-          .attr("x", 3)
+          .attr("x", -60)
           .attr("text-anchor", "start")
           .attr("font-weight", "bold")
           .text("Streamings")
@@ -227,6 +270,20 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
           lineGenerator.x((d) => xz(d.date)!)
         );
 
+        pathNormal2.attr(
+          "d",
+          lineGenerator2.x((d) => xz(d.date)!)
+        );
+        pathDashed2.attr(
+          "d",
+          lineGenerator2.x((d) => xz(d.date)!)
+        );
+
+        pathTotal2.attr(
+          "d",
+          lineGenerator2.x((d) => xz(d.date)!)
+        );
+
         /* svg
           .selectAll("path")
           .attr("d", (d, i) =>
@@ -254,6 +311,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     };
 
     animatePath(pathTotal);
+    animatePath(pathTotal2);
 
     svg
       .call(zoom)
@@ -270,13 +328,13 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
   return (
     <div className=" relative w-full h-auto">
       <svg ref={svgRef}></svg>
-      <div
+      {/* <div
         className=" justify-center items-center gap-2"
         style={{
           position: "absolute",
           display: "flex",
           top: "10px", // Position text relative to the container
-          right: "20px",
+          right: "40px",
           fontSize: "14px", // Constant font size
           fontWeight: "bold",
           color: "white",
@@ -285,7 +343,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         <div className="w-4 h-3 bg-yellow-300"></div>
         <p>=</p>
         <p>Daily Price Track</p>
-      </div>
+      </div> */}
     </div>
   );
 };
