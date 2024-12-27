@@ -64,8 +64,8 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({ data }) => {
     const svg = d3
       .select(svgRef.current)
       .attr("viewBox", [0, 0, width, height])
-      .attr("width", width)
-      .attr("height", height)
+      .style("width", "100%")
+      .style("height", "auto")
       .attr("style", "max-width: 100%; height: auto;");
 
     // Clip path
@@ -192,6 +192,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({ data }) => {
           "d",
           lineGenerator.x((d) => xz(d.date)!)
         );
+
         /* svg
           .selectAll("path")
           .attr("d", (d, i) =>
