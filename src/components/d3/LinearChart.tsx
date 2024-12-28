@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
@@ -410,6 +411,8 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
           pathDataZoomed // Use a function to dynamically recompute pathData if needed
         );
 
+        /* animatePathWithLabel(pathTotal, labelPath, xz); */
+
         gx.call(xAxis, xz);
       });
 
@@ -429,7 +432,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         .remove();
     };
 
-    animatePath(pathTotal);
+    /*  animatePath(pathTotal); */
     animatePath(pathTotal2);
 
     // renders x and y crosshair
@@ -513,11 +516,10 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       updateLegends(currentPoint);
     } */
 
-    svg
-      .call(zoom)
-      .transition()
+    svg.call(zoom);
+    /* .transition()
       .duration(750)
-      .call(zoom.scaleTo, 4, [x(new Date("2001-09-01"))!, 0]);
+      .call(zoom.scaleTo, 4, [x(new Date("2001-09-01"))!, 0]); */
 
     const updateLegends = (currentData: { date: Date; value: number }) => {
       d3.selectAll(".lineLegend").remove();
@@ -563,23 +565,120 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     // Append the single path to the SVG
     const labelPath = svg
       .append("path")
+      .attr("clip-path", `url(#${clipId})`)
       .attr("d", pathData)
       .attr("stroke", "white")
       .attr("fill", "none")
-      .attr("stroke-width", 1)
-      .attr("stroke-dasharray", function () {
+      .attr("stroke-width", 1);
+    /* .attr("stroke-dasharray", function () {
         return this.getTotalLength();
       })
       .attr("stroke-dashoffset", function () {
         return this.getTotalLength();
-      });
+      }); */
 
-    // Animate the path
-    labelPath
-      .transition()
-      .duration(3000)
-      .ease(d3.easeLinear)
-      .attr("stroke-dashoffset", 0);
+    // Function to animate pathTotal and synchronize labelPath
+    const animatePathWithLabel = (
+      path: d3.Selection<SVGPathElement, any, null, undefined>,
+      labelPath: d3.Selection<SVGPathElement, any, null, undefined>,
+      xScale: d3.ScaleTime<number, number, never>
+    ) => {
+      const length = path.node()?.getTotalLength() ?? 0;
+
+      // Animate pathTotal
+      path
+        .attr("stroke-dasharray", `${length},${length}`)
+        .attr("stroke-dashoffset", 0)
+        .transition()
+        .duration(3000)
+        .ease(d3.easeCubicInOut)
+        .attr("stroke-dashoffset", -length)
+        .on("start", function () {
+          // Start moving the labelPath
+
+          const pathDataGenerator = (xPosition: number) => `
+            M ${xPosition} ${height}          
+            L ${xPosition} ${verticalLineY}  
+            L ${xPosition + rectX} ${verticalLineY}  
+            V ${verticalLineY - rectHeight}  
+            H ${xPosition + rectX + rectWidth} 
+            V ${rectY + rectHeight}             
+            H ${xPosition + rectX}
+          `;
+
+          // Determine the x-coordinate for the breakpoint date
+          const breakpointX = xScale(breakpoint);
+
+          // Find the corresponding path length for the breakpoint
+          const breakingLength = findBreakpointLength(path, breakpointX);
+
+          labelPath
+            .transition()
+            .duration(3000)
+            .ease(d3.easeCubicInOut)
+            .attrTween("transform", function () {
+              const interpolateX = d3.interpolate(0, length); // Interpolate along the total length
+              let endPoint = 0;
+              return function (t) {
+                /* console.log(t); */
+                const currentX = interpolateX(t);
+                const point = path.node()?.getPointAtLength(currentX); // Get the current position
+                /*  console.log(currentX); */
+                /*  console.log(xScale(breakpoint)); */
+                if (point) {
+                  if (currentX >= breakingLength) {
+                    if (endPoint === 0) {
+                      const temp = path
+                        .node()
+                        ?.getPointAtLength(breakingLength);
+                      endPoint = temp!.x;
+                      const dynamicPathData = pathDataGenerator(endPoint);
+                      labelPath.attr("d", dynamicPathData); // Update pathData dynamically
+                    }
+
+                    return "";
+                  }
+                  const dynamicPathData = pathDataGenerator(point.x);
+                  labelPath.attr("d", dynamicPathData); // Update pathData dynamically
+                }
+                return "";
+              };
+            });
+        })
+        .remove();
+    };
+
+    const findBreakpointLength = (
+      path: d3.Selection<SVGPathElement, any, null, undefined>,
+      breakpointX: number
+    ) => {
+      console.log(breakpointX);
+      const totalLength = path.node()?.getTotalLength() || 0;
+
+      // Use binary search to find the length corresponding to the breakpoint
+      let start = 0;
+      let end = totalLength;
+      let lengthAtBreakpoint = 0;
+
+      while (start <= end) {
+        const mid = (start + end) / 2;
+        const point = path.node()?.getPointAtLength(mid);
+
+        if (point) {
+          if (point.x < breakpointX) {
+            start = mid + 1; // Narrow the search to the upper half
+          } else {
+            lengthAtBreakpoint = mid;
+            end = mid - 1; // Narrow the search to the lower half
+          }
+        }
+      }
+
+      return lengthAtBreakpoint;
+    };
+
+    // Animate both paths
+    animatePathWithLabel(pathTotal, labelPath, x);
 
     // Cleanup function to remove the chart
     return () => {
