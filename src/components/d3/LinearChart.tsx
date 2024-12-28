@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 
 type DataPoint = {
@@ -24,6 +24,34 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
   priceData = [],
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    let timeoutId: string | number | NodeJS.Timeout | undefined;
+
+    const handleResize = () => {
+      clearTimeout(timeoutId); // Clear the previous timer
+      timeoutId = setTimeout(() => {
+        setWindowSize({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+      }, 200); // Debounce delay in milliseconds
+    };
+
+    // Add the resize event listener
+    window.addEventListener("resize", handleResize);
+
+    // Clean up the event listener on component unmount
+    return () => {
+      clearTimeout(timeoutId); // Ensure the timer is cleared
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -51,8 +79,8 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     const dashedData2 = parsedData2.filter((d) => d.date >= breakpoint);
 
     // Chart dimensions
-    const width = 928;
-    const height = 500;
+    const width = windowSize.width >= 648 ? 928 : 928 / 2;
+    const height = windowSize.width >= 648 ? 500 : 500 / 2;
     const marginTop = 20;
     const marginRight = 40;
     const marginBottom = 30;
@@ -502,7 +530,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [data, data2, priceData]);
+  }, [data, data2, priceData, windowSize]);
 
   return (
     <div className=" relative w-full h-auto">
