@@ -392,6 +392,24 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
             updateLegends(currentPoint);
           }
         );
+
+        const pathDataZoomed = `
+          M ${xz(breakpoint)} ${height}          
+          L ${xz(breakpoint)} ${verticalLineY}  
+          L ${xz(breakpoint) + rectX} ${verticalLineY}  
+          V ${verticalLineY - rectHeight}  
+          H ${xz(breakpoint) + rectX + rectWidth} 
+          V ${rectY + rectHeight}             
+          H ${
+            xz(breakpoint) + rectX
+          }                                                
+        `;
+
+        labelPath.attr(
+          "d",
+          pathDataZoomed // Use a function to dynamically recompute pathData if needed
+        );
+
         gx.call(xAxis, xz);
       });
 
@@ -525,6 +543,43 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         .style("fill", "white")
         .attr("transform", "translate(15,9)");
     };
+
+    // Define the path as a single string
+    const verticalLineY = y2(1600000);
+    const rectX = -40;
+    const rectY = verticalLineY - 30;
+    const rectWidth = 80;
+    const rectHeight = 30;
+
+    const pathData = `
+        M ${x(breakpoint)} ${height}          
+        L ${x(breakpoint)} ${verticalLineY}  
+        L ${x(breakpoint) + rectX} ${verticalLineY}  
+        V ${verticalLineY - rectHeight}  
+        H ${x(breakpoint) + rectX + rectWidth} 
+        V ${rectY + rectHeight}             
+        H ${x(breakpoint) + rectX}                                          
+          `;
+    // Append the single path to the SVG
+    const labelPath = svg
+      .append("path")
+      .attr("d", pathData)
+      .attr("stroke", "white")
+      .attr("fill", "none")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", function () {
+        return this.getTotalLength();
+      })
+      .attr("stroke-dashoffset", function () {
+        return this.getTotalLength();
+      });
+
+    // Animate the path
+    labelPath
+      .transition()
+      .duration(3000)
+      .ease(d3.easeLinear)
+      .attr("stroke-dashoffset", 0);
 
     // Cleanup function to remove the chart
     return () => {
