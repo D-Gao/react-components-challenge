@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
 
 type DataPoint = {
@@ -31,6 +31,38 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     height: window.innerHeight,
   });
 
+  /* const parsedData = useMemo(() => {
+    return data.map((d) => ({
+      date: new Date(d.date),
+      value: d.value,
+    }));
+  }, [data]);
+
+  const parsedData2 = useMemo(() => {
+    return data2.map((d) => ({
+      date: new Date(d.date),
+      value: d.value,
+    }));
+  }, [data2]); */
+
+  const parsedDataList = useMemo(() => {
+    return [
+      data.map((d) => ({ date: new Date(d.date), value: d.value })),
+      data2.map((d) => ({ date: new Date(d.date), value: d.value })),
+    ];
+  }, [data, data2]);
+
+  const breakpoint = useMemo(() => {
+    return new Date("2001-09-01");
+  }, []);
+
+  const parsedPriceData = useMemo(() => {
+    return priceData.map((d) => ({
+      date: new Date(d.date),
+      value: d.price,
+    }));
+  }, [priceData]);
+
   useEffect(() => {
     let timeoutId: string | number | NodeJS.Timeout | undefined;
 
@@ -56,83 +88,27 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
 
   useEffect(() => {
     if (!svgRef.current) return;
-    // Parse the data
-    const parsedData = data.map((d) => ({
-      date: new Date(d.date),
-      value: d.value,
-    }));
-
-    const parsedData2 = data2.map((d) => ({
-      date: new Date(d.date),
-      value: d.value,
-    }));
-
-    const parsedPriceData = priceData.map((d) => ({
-      date: new Date(d.date),
-      value: d.price,
-    }));
-
-    const breakpoint = new Date("2001-09-01");
-    const normalData = parsedData.filter((d) => d.date <= breakpoint);
-    const dashedData = parsedData.filter((d) => d.date >= breakpoint);
-
-    const normalData2 = parsedData2.filter((d) => d.date <= breakpoint);
-    const dashedData2 = parsedData2.filter((d) => d.date >= breakpoint);
 
     // Chart dimensions
     const width = windowSize.width >= 648 ? 928 : 928 / 2;
     const height = windowSize.width >= 648 ? 500 : 500 / 2;
-    const marginTop = 20;
-    const marginRight = 40;
-    const marginBottom = 30;
-    const marginLeft = 40;
+    const margin = { top: 20, right: 40, bottom: 30, left: 40 };
 
-    // Scales
-    /*  const x = d3
-      .scaleUtc()
-      .domain(d3.extent(parsedData, (d) => d.date) as [Date, Date])
-      .range([marginLeft, width - marginRight]); */
-
-    const x = d3
+    const xScale = d3
       .scaleUtc()
       .domain([
-        d3.min([...parsedData, ...parsedData2], (d) => d.date)!, // Minimum date from both datasets
-        d3.max([...parsedData, ...parsedData2], (d) => d.date)!, // Maximum date from both datasets
+        d3.min(parsedDataList.flat(), (d) => d.date)!,
+        d3.max(parsedDataList.flat(), (d) => d.date)!,
       ])
-      .range([marginLeft, width - marginRight]);
+      .range([margin.left, width - margin.right]);
 
-    const y = d3
-      .scaleLinear()
-      .domain([0, d3.max(parsedData, (d) => d.value) ?? 0])
-      .nice()
-      .range([height - marginBottom, marginTop]);
-
-    const y2 = d3
-      .scaleLinear()
-      .domain([0, d3.max(parsedData2, (d) => d.value) ?? 0])
-      .nice()
-      .range([height - marginBottom, marginTop]);
-
-    // Area generator
-    /* const areaGenerator = d3
-      .area<{ date: Date; value: number }>()
-      .curve(d3.curveStepAfter)
-      .x((d) => x(d.date)!)
-      .y0(y(0))
-      .y1((d) => y(d.value)); */
-
-    // Linear generator
-    const lineGenerator = d3
-      .line<{ date: Date; value: number }>()
-      .curve(d3.curveLinear)
-      .x((d) => x(d.date)!)
-      .y((d) => y(d.value));
-
-    const lineGenerator2 = d3
-      .line<{ date: Date; value: number }>()
-      .curve(d3.curveLinear)
-      .x((d) => x(d.date)!)
-      .y((d) => y2(d.value));
+    const yScales = parsedDataList.map((parsedData) =>
+      d3
+        .scaleLinear()
+        .domain([0, d3.max(parsedData, (d) => d.value) ?? 0])
+        .nice()
+        .range([height - margin.bottom, margin.top])
+    );
 
     // SVG setup
     const svg = d3
@@ -148,275 +124,44 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       .append("clipPath")
       .attr("id", clipId)
       .append("rect")
-      .attr("x", marginLeft)
-      .attr("y", marginTop)
-      .attr("width", width - marginLeft - marginRight)
-      .attr("height", height - marginTop - marginBottom);
+      .attr("x", margin.left)
+      .attr("y", margin.top)
+      .attr("width", width - margin.left - margin.right)
+      .attr("height", height - margin.top - margin.bottom);
 
-    // Area
-    /* const path = svg
-      .append("path")
-      .datum(parsedData)
-      .attr("clip-path", `url(#${clipId})`)
-      .attr("fill", "steelblue")
-      .attr("d", areaGenerator); */
+    // Function to split data by breakpoint
+    const splitByBreakpoint = (
+      data: { date: Date; value: number }[],
+      breakpoint: Date
+    ) => ({
+      before: data.filter((d) => d.date <= breakpoint),
+      after: data.filter((d) => d.date >= breakpoint),
+    });
 
-    /* const path = svg
-      .append("path")
-      .datum(parsedData)
-      .attr("clip-path", `url(#${clipId})`)
-      .attr("fill", "none")
-      .attr("stroke", "steelblue")
-      .attr("stroke-width", 1.5)
-      .attr("d", areaGenerator); */
+    // Function to create paths
+    const createPath = (
+      svg: d3.Selection<SVGSVGElement, unknown, null, undefined>,
+      data: { date: Date; value: number }[],
+      lineGenerator: d3.Line<{ date: Date; value: number }>,
+      strokeColor: string,
+      strokeDasharray: string | null = null
+    ) => {
+      const path = svg
+        .append("path")
+        .attr("clip-path", `url(#${clipId})`)
+        .datum(data)
+        .attr("class", "line-path")
+        .attr("fill", "none")
+        .attr("stroke", strokeColor)
+        .attr("stroke-width", 1.5)
+        .attr("d", lineGenerator);
 
-    // Normal line
-    const pathNormal = svg
-      .append("path")
-      .datum(normalData)
-      .attr("clip-path", `url(#${clipId})`)
-      .attr("fill", "none")
-      .attr("stroke", "steelblue")
-      .attr("stroke-width", 1.5)
-      .attr("d", lineGenerator);
+      if (strokeDasharray) {
+        path.attr("stroke-dasharray", strokeDasharray);
+      }
 
-    // Dashed line
-    const pathDashed = svg
-      .append("path")
-      .datum(dashedData)
-      .attr("clip-path", `url(#${clipId})`)
-      .attr("fill", "none")
-      .attr("stroke", "steelblue")
-      .attr("stroke-width", 1.5)
-      .attr("stroke-dasharray", "5,5")
-      .attr("d", lineGenerator);
-    /* .call((path) => {
-        const length = path.node()?.getTotalLength() ?? 0;
-        path
-          .attr("stroke-dasharray", `${length},${length}`)
-          .attr("stroke-dashoffset", length);
-      }); // Set initial dash state */
-
-    const pathTotal = svg
-      .append("path")
-      .datum(parsedData)
-      .attr("clip-path", `url(#${clipId})`)
-      .attr("fill", "none")
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .attr("d", lineGenerator);
-
-    const pathNormal2 = svg
-      .append("path")
-      .datum(normalData2)
-      .attr("clip-path", `url(#${clipId})`)
-      .attr("fill", "none")
-      .attr("stroke", "red")
-      .attr("stroke-width", 1.5)
-      .attr("d", lineGenerator2);
-
-    // Dashed line
-    const pathDashed2 = svg
-      .append("path")
-      .datum(dashedData2)
-      .attr("clip-path", `url(#${clipId})`)
-      .attr("fill", "none")
-      .attr("stroke", "red")
-      .attr("stroke-width", 1.5)
-      .attr("stroke-dasharray", "5,5")
-      .attr("d", lineGenerator2);
-
-    const pathTotal2 = svg
-      .append("path")
-      .datum(parsedData2)
-      .attr("clip-path", `url(#${clipId})`)
-      .attr("fill", "none")
-      .attr("stroke", "black")
-      .attr("stroke-width", 1.5)
-      .attr("d", lineGenerator2);
-
-    // Axes
-    const xAxis = (
-      g: d3.Selection<SVGGElement, unknown, null, undefined>,
-      x: d3.ScaleTime<number, number, never>
-    ) =>
-      g.attr("transform", `translate(0,${height - marginBottom})`).call(
-        d3
-          .axisBottom(x)
-          .ticks(width / 80)
-          .tickSizeOuter(0)
-      );
-
-    const gx = svg.append("g").call(xAxis, x);
-
-    svg
-      .append("g")
-      .attr("transform", `translate(${marginLeft},0)`)
-      .call(d3.axisLeft(y).ticks(null, "s"))
-      .call((g) => g.select(".domain").remove())
-      .call((g) =>
-        g
-          .select(".tick:last-of-type text")
-          .clone()
-          .attr("x", 3)
-          .attr("text-anchor", "start")
-          .attr("font-weight", "bold")
-          .text("Social Interaction")
-      );
-
-    svg
-      .append("g")
-      .attr("transform", `translate(${width - marginRight}, 0)`)
-      .call(d3.axisRight(y2).ticks(null, "s"))
-      .call((g) => g.select(".domain").remove())
-      .call((g) =>
-        g
-          .select(".tick:last-of-type text")
-          .clone()
-          .attr("x", -60)
-          .attr("text-anchor", "start")
-          .attr("font-weight", "bold")
-          .text("Streamings")
-      );
-
-    // Zoom behavior
-    const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 512])
-      .extent([
-        [marginLeft, 0],
-        [width - marginRight, height],
-      ])
-      .translateExtent([
-        [marginLeft, -Infinity],
-        [width - marginRight, Infinity],
-      ])
-      .on("zoom", (event) => {
-        const xz = event.transform.rescaleX(x);
-        /* path.attr(
-          "d",
-          areaGenerator.x((d) => xz(d.date)!)
-        ); */
-        pathNormal.attr(
-          "d",
-          lineGenerator.x((d) => xz(d.date)!)
-        );
-        pathDashed.attr(
-          "d",
-          lineGenerator.x((d) => xz(d.date)!)
-        );
-
-        pathTotal.attr(
-          "d",
-          lineGenerator.x((d) => xz(d.date)!)
-        );
-
-        pathNormal2.attr(
-          "d",
-          lineGenerator2.x((d) => xz(d.date)!)
-        );
-        pathDashed2.attr(
-          "d",
-          lineGenerator2.x((d) => xz(d.date)!)
-        );
-
-        pathTotal2.attr(
-          "d",
-          lineGenerator2.x((d) => xz(d.date)!)
-        );
-
-        overlayRect.on(
-          "mousemove",
-          function (this: SVGRectElement, event: MouseEvent) {
-            //returns corresponding value from the domain
-            const correspondingDate = xz.invert(d3.pointer(event, this)[0]);
-            //gets insertion point
-            const i = bisectDate(parsedData, correspondingDate);
-            const d0 = parsedData[i - 1];
-            const d1 = parsedData[i];
-
-            const p0 = parsedData2[i - 1];
-            const p1 = parsedData2[i];
-
-            const currentPoint =
-              correspondingDate.getTime() - d0["date"].getTime() >
-              d1["date"].getTime() - correspondingDate.getTime()
-                ? d1
-                : d0;
-
-            const currentPoint2 =
-              correspondingDate.getTime() - p0["date"].getTime() >
-              p1["date"].getTime() - correspondingDate.getTime()
-                ? p1
-                : p0;
-
-            focus.attr(
-              "transform",
-              `translate(${xz(currentPoint["date"])}, ${y(
-                currentPoint["value"]
-              )})`
-            );
-
-            focus2.attr(
-              "transform",
-              `translate(${xz(currentPoint2["date"])}, ${y2(
-                currentPoint2["value"]
-              )})`
-            );
-
-            focus
-              .select("line.x")
-              .attr("x1", 0)
-              .attr("x2", -xz(currentPoint["date"]) + marginLeft)
-              .attr("y1", 0)
-              .attr("y2", 0);
-            focus
-              .select("line.y")
-              .attr("x1", 0)
-              .attr("x2", 0)
-              .attr("y1", 0)
-              .attr("y2", height - y(currentPoint["value"]) - marginBottom);
-
-            focus2
-              .select("line.x")
-              .attr("x1", 0)
-              .attr("x2", width - xz(currentPoint["date"]) - marginRight)
-              .attr("y1", 0)
-              .attr("y2", 0);
-            focus2
-              .select("line.y")
-              .attr("x1", 0)
-              .attr("x2", 0)
-              .attr("y1", 0)
-              .attr("y2", height - y2(currentPoint["value"]) - marginBottom);
-
-            updateLegends(currentPoint);
-          }
-        );
-
-        const pathDataZoomed = `
-          M ${xz(breakpoint)} ${height}          
-          L ${xz(breakpoint)} ${verticalLineY}  
-          L ${xz(breakpoint) + rectX} ${verticalLineY}  
-          V ${verticalLineY - rectHeight}  
-          H ${xz(breakpoint) + rectX + rectWidth} 
-          V ${rectY + rectHeight}             
-          H ${
-            xz(breakpoint) + rectX
-          }                                                
-        `;
-
-        labelPath.attr(
-          "d",
-          pathDataZoomed // Use a function to dynamically recompute pathData if needed
-        );
-
-        /* animatePathWithLabel(pathTotal, labelPath, xz); */
-
-        gx.call(xAxis, xz);
-      });
-
-    // Initial animation
+      return path;
+    };
 
     const animatePath = (
       path: d3.Selection<SVGPathElement, any, null, undefined>
@@ -432,150 +177,270 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         .remove();
     };
 
-    /*  animatePath(pathTotal); */
-    animatePath(pathTotal2);
+    const coverPath: any[] = [];
+    const linePath: any[] = [];
+    // Generate lines and paths
+    parsedDataList.forEach((parsedData, index) => {
+      const yScale = yScales[index];
+      const color = index === 0 ? "steelblue" : "red";
 
-    // renders x and y crosshair
-    const focus = svg
-      .append("g")
-      .attr("class", "focus")
-      .style("display", "none");
-    focus.append("circle").attr("r", 4.5).attr("fill", "white");
-    focus.append("line").classed("x", true);
-    focus.append("line").classed("y", true);
+      const lineGenerator = d3
+        .line<{ date: Date; value: number }>()
+        .curve(d3.curveLinear)
+        .x((d) => xScale(d.date)!)
+        .y((d) => yScale(d.value));
 
-    const focus2 = svg
-      .append("g")
-      .attr("class", "focus2")
-      .style("display", "none");
+      const { before, after } = splitByBreakpoint(parsedData, breakpoint);
 
-    focus2.append("circle").attr("r", 4.5).attr("fill", "white");
-    focus2.append("line").classed("x", true);
-    focus2.append("line").classed("y", true);
+      const lineBefore = createPath(svg, before, lineGenerator, color); // Normal line
+      const lineAfter = createPath(svg, after, lineGenerator, color, "5,5"); // Dashed line
+      const pathTotal = createPath(svg, parsedData, lineGenerator, "black"); // Total line
 
+      coverPath.push(pathTotal);
+      linePath.push(lineBefore);
+      linePath.push(lineAfter);
+    });
+
+    // Axes
+    const xAxis = (
+      g: d3.Selection<SVGGElement, unknown, null, undefined>,
+      x: d3.ScaleTime<number, number, never>
+    ) =>
+      g.attr("transform", `translate(0,${height - margin.bottom})`).call(
+        d3
+          .axisBottom(x)
+          .ticks(width / 80)
+          .tickSizeOuter(0)
+      );
+
+    const gx = svg.append("g").call(xAxis, xScale);
+
+    yScales.forEach((yScale, index) => {
+      const axis = index === 0 ? d3.axisLeft(yScale) : d3.axisRight(yScale);
+      const offset = index === 0 ? margin.left : width - margin.right;
+
+      svg
+        .append("g")
+        .attr("transform", `translate(${offset},0)`)
+        .call(axis.ticks(null, "s"))
+        .call((g) => g.select(".domain").remove());
+    });
+
+    // Zoom behavior
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 512])
+      .extent([
+        [margin.left, 0],
+        [width - margin.right, height],
+      ])
+      .translateExtent([
+        [margin.left, -Infinity],
+        [width - margin.right, Infinity],
+      ])
+      .on("zoom", (event) => {
+        const xz = event.transform.rescaleX(xScale);
+        const singleDataLength = linePath.length / parsedDataList.length;
+        linePath.forEach((path, i) => {
+          const yScale = yScales[Math.floor(i / singleDataLength)];
+          const lineGenerator = d3
+            .line<{ date: Date; value: number }>()
+            .x((d) => xz(d.date)!)
+            .y((d) => yScale(d.value));
+          path.attr(
+            "d",
+            lineGenerator.x((d) => xz(d.date)!)
+          );
+        });
+        coverPath.forEach((path, i) => {
+          const yScale = yScales[i];
+          const lineGenerator = d3
+            .line<{ date: Date; value: number }>()
+            .x((d) => xz(d.date)!)
+            .y((d) => yScale(d.value));
+          path.attr(
+            "d",
+            lineGenerator.x((d) => xz(d.date)!)
+          );
+        });
+        gx.call(xAxis, xz);
+
+        overlayRect.on("mousemove", function (event) {
+          generateCrosshair.call(this, event, xz);
+        });
+
+        labelPath.attr(
+          "d",
+          generateLabelPathData(xz(breakpoint)) // Use a function to dynamically recompute pathData if needed
+        );
+      });
+
+    // Array to hold focus elements for each dataset
+    const focuses: {
+      focus: d3.Selection<SVGGElement, unknown, null, undefined>;
+      data: any[];
+      yScale: d3.ScaleLinear<number, number, never>;
+    }[] = [];
+    // Loop through each dataset to create focus elements
+    parsedDataList.forEach((parsedData, index) => {
+      const focusGroup = svg
+        .append("g")
+        .attr("class", `focus focus-${index}`)
+        .style("display", "none");
+
+      focusGroup.append("circle").attr("r", 4.5).attr("fill", "white");
+      focusGroup.append("line").classed("x", true);
+      focusGroup.append("line").classed("y", true);
+
+      focuses.push({
+        focus: focusGroup,
+        data: parsedData,
+        yScale: yScales[index], // Ensure you have individual yScales for each dataset
+      });
+    });
+
+    // Overlay for detecting mouse events
     const overlayRect = svg
       .append("rect")
       .attr("class", "overlay")
-      .attr("x", marginLeft)
-      .attr("y", marginTop)
-      .attr("width", width - marginLeft - marginRight) // Match clip path width
-      .attr("height", height - marginTop - marginBottom) // Match clip path height
+      .attr("x", margin.left)
+      .attr("y", margin.top)
+      .attr("width", width - margin.left - margin.right) // Match clip path width
+      .attr("height", height - margin.top - margin.bottom) // Match clip path height
       .on("mouseover", () => {
-        focus.style("display", null);
-        focus2.style("display", null);
+        focuses.forEach(({ focus }) => focus.style("display", null));
       })
       .on("mouseout", () => {
-        focus.style("display", "none");
-        focus2.style("display", "none");
+        focuses.forEach(({ focus }) => focus.style("display", "none"));
+      })
+      .on("mousemove", function (event) {
+        generateCrosshair.call(this, event, xScale);
       });
-    /* .on("mousemove", generateCrosshair); */
-    d3.select(".overlay").style("fill", "none");
-    d3.select(".overlay").style("pointer-events", "all");
-    d3.selectAll(".focus line").style("fill", "none");
-    d3.selectAll(".focus line").style("stroke", "#67809f");
-    d3.selectAll(".focus line").style("stroke-width", "1.5px");
-    d3.selectAll(".focus line").style("stroke-dasharray", "3 3");
 
-    d3.selectAll(".focus2 line").style("fill", "none");
-    d3.selectAll(".focus2 line").style("stroke", "#67809f");
-    d3.selectAll(".focus2 line").style("stroke-width", "1.5px");
-    d3.selectAll(".focus2 line").style("stroke-dasharray", "3 3");
+    // Styling for focus elements
+    d3.select(".overlay").style("fill", "none").style("pointer-events", "all");
+    d3.selectAll(".focus line")
+      .style("fill", "none")
+      .style("stroke", "#67809f")
+      .style("stroke-width", "1.5px")
+      .style("stroke-dasharray", "3 3");
 
+    // Function to generate crosshairs dynamically for all datasets
     const bisectDate = d3.bisector(
       (d: { date: Date; value: number }) => d.date
     ).left;
-    /*  function generateCrosshair(this: SVGRectElement, event: MouseEvent) {
-      //returns corresponding value from the domain
-      const correspondingDate = x.invert(d3.pointer(event, this)[0]);
-      //gets insertion point
-      const i = bisectDate(parsedData, correspondingDate);
-      const d0 = parsedData[i - 1];
-      const d1 = parsedData[i];
-      const currentPoint =
-        correspondingDate.getTime() - d0["date"].getTime() >
-        d1["date"].getTime() - correspondingDate.getTime()
-          ? d1
-          : d0;
 
-      focus.attr(
-        "transform",
-        `translate(${x(currentPoint["date"])}, ${y(currentPoint["value"])})`
-      );
-      focus
-        .select("line.x")
-        .attr("x1", 0)
-        .attr("x2", -x(currentPoint["date"]))
-        .attr("y1", 0)
-        .attr("y2", 0);
-      focus
-        .select("line.y")
-        .attr("x1", 0)
-        .attr("x2", 0)
-        .attr("y1", 0)
-        .attr("y2", height - y(currentPoint["value"]));
-      updateLegends(currentPoint);
-    } */
-
-    svg.call(zoom);
-    /* .transition()
-      .duration(750)
-      .call(zoom.scaleTo, 4, [x(new Date("2001-09-01"))!, 0]); */
-
-    const updateLegends = (currentData: { date: Date; value: number }) => {
+    function updateLegends(
+      correspondingDate: Date,
+      focuses: {
+        focus: d3.Selection<SVGGElement, unknown, null, undefined>;
+        data: { date: Date; value: number }[];
+      }[]
+    ) {
       d3.selectAll(".lineLegend").remove();
-      const legendKeys = Object.keys(data[0]);
-      const lineLegend = svg
-        .selectAll(".lineLegend")
-        .data(legendKeys)
-        .enter()
-        .append("g")
-        .attr("class", "lineLegend")
-        .attr("transform", (_d, i) => {
-          return `translate(${marginLeft}, ${height - 20 - (i + 1) * 30})`;
-        });
-      lineLegend
-        .append("text")
-        .text((d) => {
-          if (d === "date") {
-            return `${d}: ${currentData[d].toLocaleDateString()}`;
-          } else {
-            return `${d}: ${currentData["value"]}`;
-          }
-        })
-        .style("fill", "white")
-        .attr("transform", "translate(15,9)");
-    };
 
+      focuses.forEach(({ data }, index) => {
+        const i = bisectDate(data, correspondingDate);
+        const currentData = data[i];
+
+        const legend = svg
+          .append("g")
+          .attr("class", `lineLegend legend-${index}`)
+          .attr(
+            "transform",
+            `translate(${margin.left}, ${height - 20 - index * 30})`
+          );
+
+        legend
+          .append("text")
+          .text(
+            currentData
+              ? `Dataset ${
+                  index + 1
+                }: ${currentData.date.toLocaleDateString()} - ${
+                  currentData.value
+                }`
+              : `No Data`
+          )
+          .style("fill", "white")
+          .attr("transform", "translate(15,9)");
+      });
+    }
+
+    function generateCrosshair(
+      this: SVGRectElement,
+      event: MouseEvent,
+      xScale: d3.ScaleTime<number, number, never>
+    ) {
+      const mouseX = d3.pointer(event, this)[0];
+      const correspondingDate = xScale.invert(mouseX);
+
+      focuses.forEach(({ focus, data, yScale }, index) => {
+        const i = bisectDate(data, correspondingDate);
+        const d0 = data[i - 1];
+        const d1 = data[i];
+        const currentPoint =
+          correspondingDate.getTime() - d0.date.getTime() >
+          d1.date.getTime() - correspondingDate.getTime()
+            ? d1
+            : d0;
+
+        focus.attr(
+          "transform",
+          `translate(${xScale(currentPoint.date)}, ${yScale(
+            currentPoint.value
+          )})`
+        );
+
+        focus
+          .select("line.x")
+          .attr("x1", 0)
+          .attr(
+            "x2",
+            index % 2
+              ? width - margin.right
+              : margin.left - xScale(currentPoint.date)
+          )
+          .attr("y1", 0)
+          .attr("y2", 0);
+
+        focus
+          .select("line.y")
+          .attr("x1", 0)
+          .attr("x2", 0)
+          .attr("y1", 0)
+          .attr("y2", height - yScale(currentPoint.value) - margin.bottom);
+      });
+
+      updateLegends(correspondingDate, focuses);
+    }
+
+    // Define the label path as a single draw
     // Define the path as a single string
-    const verticalLineY = y2(1600000);
+    const verticalLineY = 100;
     const rectX = -40;
     const rectY = verticalLineY - 30;
     const rectWidth = 80;
     const rectHeight = 30;
+    // Utility function to generate path data dynamically
+    const generateLabelPathData = (xPosition: number) => `
+      M ${xPosition} ${height}          
+      L ${xPosition} ${verticalLineY}  
+      L ${xPosition + rectX} ${verticalLineY}  
+      V ${verticalLineY - rectHeight}  
+      H ${xPosition + rectX + rectWidth} 
+      V ${verticalLineY}             
+      H ${xPosition + rectX}
+    `;
 
-    const pathData = `
-        M ${x(breakpoint)} ${height}          
-        L ${x(breakpoint)} ${verticalLineY}  
-        L ${x(breakpoint) + rectX} ${verticalLineY}  
-        V ${verticalLineY - rectHeight}  
-        H ${x(breakpoint) + rectX + rectWidth} 
-        V ${rectY + rectHeight}             
-        H ${x(breakpoint) + rectX}                                          
-          `;
     // Append the single path to the SVG
     const labelPath = svg
       .append("path")
       .attr("clip-path", `url(#${clipId})`)
-      .attr("d", pathData)
+      .attr("d", generateLabelPathData(xScale(breakpoint)))
       .attr("stroke", "white")
       .attr("fill", "none")
       .attr("stroke-width", 1);
-    /* .attr("stroke-dasharray", function () {
-        return this.getTotalLength();
-      })
-      .attr("stroke-dashoffset", function () {
-        return this.getTotalLength();
-      }); */
 
     // Function to animate pathTotal and synchronize labelPath
     const animatePathWithLabel = (
@@ -595,16 +460,6 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         .attr("stroke-dashoffset", -length)
         .on("start", function () {
           // Start moving the labelPath
-
-          const pathDataGenerator = (xPosition: number) => `
-            M ${xPosition} ${height}          
-            L ${xPosition} ${verticalLineY}  
-            L ${xPosition + rectX} ${verticalLineY}  
-            V ${verticalLineY - rectHeight}  
-            H ${xPosition + rectX + rectWidth} 
-            V ${rectY + rectHeight}             
-            H ${xPosition + rectX}
-          `;
 
           // Determine the x-coordinate for the breakpoint date
           const breakpointX = xScale(breakpoint);
@@ -632,13 +487,13 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
                         .node()
                         ?.getPointAtLength(breakingLength);
                       endPoint = temp!.x;
-                      const dynamicPathData = pathDataGenerator(endPoint);
+                      const dynamicPathData = generateLabelPathData(endPoint);
                       labelPath.attr("d", dynamicPathData); // Update pathData dynamically
                     }
 
                     return "";
                   }
-                  const dynamicPathData = pathDataGenerator(point.x);
+                  const dynamicPathData = generateLabelPathData(point.x);
                   labelPath.attr("d", dynamicPathData); // Update pathData dynamically
                 }
                 return "";
@@ -648,14 +503,13 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         .remove();
     };
 
+    // Optimized binary search for breakpoint length
     const findBreakpointLength = (
       path: d3.Selection<SVGPathElement, any, null, undefined>,
       breakpointX: number
     ) => {
-      console.log(breakpointX);
       const totalLength = path.node()?.getTotalLength() || 0;
 
-      // Use binary search to find the length corresponding to the breakpoint
       let start = 0;
       let end = totalLength;
       let lengthAtBreakpoint = 0;
@@ -666,30 +520,36 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
 
         if (point) {
           if (point.x < breakpointX) {
-            start = mid + 1; // Narrow the search to the upper half
+            start = mid + 1;
           } else {
             lengthAtBreakpoint = mid;
-            end = mid - 1; // Narrow the search to the lower half
+            end = mid - 1;
           }
+        } else {
+          break; // Exit if the point cannot be retrieved
         }
       }
 
       return lengthAtBreakpoint;
     };
 
-    // Animate both paths
-    animatePathWithLabel(pathTotal, labelPath, x);
+    // Initial animation
+    coverPath.forEach((path) => {
+      animatePath(path);
+    });
+    animatePathWithLabel(coverPath[0], labelPath, xScale);
+    svg.call(zoom);
 
     // Cleanup function to remove the chart
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [data, data2, priceData, windowSize]);
+  }, [breakpoint, parsedDataList, priceData, windowSize]);
 
   return (
     <div className=" relative w-full h-auto">
       <svg ref={svgRef}></svg>
-      {/* <div
+      <div
         className=" justify-center items-center gap-2"
         style={{
           position: "absolute",
@@ -704,7 +564,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         <div className="w-4 h-3 bg-yellow-300"></div>
         <p>=</p>
         <p>Daily Price Track</p>
-      </div> */}
+      </div>
     </div>
   );
 };
