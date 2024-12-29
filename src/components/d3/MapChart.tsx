@@ -1,8 +1,10 @@
 // MapChart.js
+//https://helpcenter.flourish.studio/hc/en-us/articles/8827922078351-How-to-simplify-GeoJSON-files
+//jq -c . ./src/components/d3/data/world.json > world.min.json
 import { useState, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { Feature } from "geojson";
-import worldData from "./data/world.json";
+import worldData from "./data/world.min.json";
 //import { feature } from 'topojson-client';
 //import { countryData } from "./data/countryData";
 
@@ -94,33 +96,37 @@ const MapChart = () => {
       ref={containerRef}
     >
       <svg ref={svgRef}></svg>
-      {tooltip.visible && (
-        <div
-          ref={tooltipRef}
-          style={{
-            position: "absolute",
-            top: Math.min(
-              Math.max(tooltip.y, 0), // Prevent overflow at the top
-              containerRef.current!.offsetHeight -
-                (tooltipRef.current?.getBoundingClientRect().height ??
-                  containerRef.current!.offsetHeight) // Prevent overflow at the bottom
-            ),
-            left: Math.min(
-              Math.max(tooltip.x, 0), // Prevent overflow on the left
-              containerRef.current!.offsetWidth -
-                (tooltipRef.current?.getBoundingClientRect().width ??
-                  containerRef.current!.offsetWidth) // Prevent overflow on the right
-            ),
-            padding: "5px 10px",
-            background: "#000",
-            color: "#fff",
-            borderRadius: "3px",
-            pointerEvents: "none",
-          }}
-        >
-          {tooltip.content}
-        </div>
-      )}
+
+      <div
+        ref={tooltipRef}
+        style={{
+          visibility: tooltip.visible ? "visible" : "hidden",
+          position: "absolute",
+          top: tooltip.visible
+            ? Math.min(
+                Math.max(tooltip.y, 0), // Prevent overflow at the top
+                containerRef.current!.offsetHeight -
+                  (tooltipRef.current?.getBoundingClientRect().height ??
+                    containerRef.current!.offsetHeight) // Prevent overflow at the bottom
+              )
+            : 0,
+          left: tooltip.visible
+            ? Math.min(
+                Math.max(tooltip.x, 0), // Prevent overflow on the left
+                containerRef.current!.offsetWidth -
+                  (tooltipRef.current?.getBoundingClientRect().width ??
+                    containerRef.current!.offsetWidth) // Prevent overflow on the right
+              )
+            : 0,
+          padding: "5px 10px",
+          background: "#000",
+          color: "#fff",
+          borderRadius: "3px",
+          pointerEvents: "none",
+        }}
+      >
+        {tooltip.content}
+      </div>
     </div>
   );
 };

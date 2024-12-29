@@ -65,8 +65,6 @@
   }
   .country {
     vector-effect: non-scaling-stroke;
-    stroke: #222;
-    fill: #555;
   }
 
   #waveform ::part(region) {
