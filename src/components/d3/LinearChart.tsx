@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import * as d3 from "d3";
 
 type DataPoint = {
@@ -17,19 +17,21 @@ type ZoomableAreaChartProps = {
   data: DataPoint[];
   data2: DataPoint[];
   priceData: PricePoint[];
+  scale?: number;
 };
 
 const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
   data = [],
   data2 = [],
   priceData = [],
+  scale = 2,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  const [windowSize, setWindowSize] = useState({
+  /* const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
-  });
+  }); */
 
   const parsedDataList = useMemo(() => {
     return [
@@ -39,6 +41,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
   }, [data, data2]);
 
   const breakpoint = useMemo(() => {
+    //this should be the current date
     return new Date("2001-09-01");
   }, []);
 
@@ -49,7 +52,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     }));
   }, [priceData]);
 
-  useEffect(() => {
+  /* useEffect(() => {
     let timeoutId: string | number | NodeJS.Timeout | undefined;
 
     const handleResize = () => {
@@ -70,14 +73,14 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       clearTimeout(timeoutId); // Ensure the timer is cleared
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
+  }, []); */
 
   useEffect(() => {
     if (!svgRef.current) return;
 
     // Chart dimensions
-    const width = windowSize.width >= 648 ? 928 : 928 / 2;
-    const height = windowSize.width >= 648 ? 500 : 500 / 2;
+    const width = 928 / scale; //windowSize.width >= 648 ? 928 : 928 / 2;
+    const height = 500 / scale; //windowSize.width >= 648 ? 500 : 500 / 2;
     const margin = { top: 20, right: 40, bottom: 30, left: 40 };
 
     const verticalLineY = 100;
@@ -144,7 +147,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
         .attr("class", "line-path")
         .attr("fill", "none")
         .attr("stroke", strokeColor)
-        .attr("stroke-width", 1.5)
+        .attr("stroke-width", 1)
         .attr("d", lineGenerator);
 
       if (strokeDasharray) {
@@ -264,7 +267,7 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
           "d",
           generateLabelPathData(xz(breakpoint)) // Use a function to dynamically recompute pathData if needed
         );
-        labelText.attr("x", xz(breakpoint) - (rectWidth - 15) / 2);
+        labelText.attr("x", xz(breakpoint));
       });
 
     // Array to hold focus elements for each dataset
@@ -421,9 +424,6 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
       H ${xPosition + rectX}
     `;
 
-    // Create a group element for the label path and text
-    const labelGroup = svg.append("g").attr("id", "labelGroup");
-
     // Append the single path to the SVG
     const labelPath = svg
       .append("path")
@@ -437,12 +437,12 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     // Append the text directly to the SVG
     const labelText = svg
       .append("text")
-      .attr("x", xScale(breakpoint) - rectWidth / 2) // X position relative to the path
-      .attr("y", verticalLineY - 10) // Y position relative to the path
+      .attr("text-anchor", "middle") // Center text horizontally
+      .attr("x", xScale(breakpoint)) // X position relative to the path
+      .attr("y", verticalLineY - 5) // Y position relative to the path
       .attr("fill", "white") // Adjust text color
       .attr("font-size", "12px") // Adjust font size
-      .attr("dy", -5) // Adjust vertical offset if needed
-      .text("Your Text Heredsadas");
+      .attr("dy", -5); // Adjust vertical offset if needed
 
     // Attach the text to the path using <textPath>
     /* labelText
@@ -497,8 +497,8 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
                       endPoint = end!.x;
                       const dynamicPathData = generateLabelPathData(endPoint);
                       labelPath.attr("d", dynamicPathData); // Update pathData dynamically
-                      labelText.attr("x", endPoint - (rectWidth - 15) / 2);
-                      labelText.text(`price: ${parsedDataList[0][i].value} $`);
+                      labelText.attr("x", endPoint);
+                      labelText.text(`price: ${parsedPriceData[i].value} $`);
                     }
 
                     return "";
@@ -507,8 +507,8 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
                   const i = bisectDate(parsedDataList[0], currentDate);
                   const dynamicPathData = generateLabelPathData(point.x);
                   labelPath.attr("d", dynamicPathData); // Update pathData dynamically
-                  labelText.attr("x", point.x - (rectWidth - 15) / 2);
-                  labelText.text(`price: ${parsedDataList[0][i].value} $`);
+                  labelText.attr("x", point.x);
+                  labelText.text(`price: ${parsedPriceData[i].value} $`);
                 }
                 return "";
               };
@@ -558,10 +558,16 @@ const ZoomableAreaChart: React.FC<ZoomableAreaChartProps> = ({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [breakpoint, parsedDataList, priceData, windowSize]);
+  }, [breakpoint, parsedDataList, parsedPriceData, scale]);
 
   return (
-    <div className=" relative w-full h-auto">
+    <div
+      className=" relative w-full h-auto"
+      id="chart-container"
+      onPointerDown={(e) => {
+        e.stopPropagation();
+      }}
+    >
       <svg ref={svgRef}></svg>
       <div
         className=" justify-center items-center gap-2"

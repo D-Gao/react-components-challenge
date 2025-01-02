@@ -59,16 +59,26 @@ const MapChart = () => {
         const countryName = d?.properties?.name;
         /*  const info = countryData[countryName] ? countryData[countryName].value : "No Data"; */
 
-        setTooltip({
-          visible: true,
-          x: event.pageX,
-          y: event.pageY,
-          content: `${countryName}`,
-        });
+        if (containerRef.current) {
+          const containerRect = containerRef.current.getBoundingClientRect();
+          console.log(containerRect.left);
+          setTooltip({
+            visible: true,
+            x: event.pageX - containerRect.left,
+            y: event.pageY - containerRect.top,
+            content: `${countryName}`,
+          });
+        }
       })
       .on("mousemove", (event) => {
         // Update tooltip position as mouse moves
-        setTooltip((t) => ({ ...t, x: event.pageX + 10, y: event.pageY + 10 }));
+        if (!containerRef.current) return;
+        const containerRect = containerRef.current.getBoundingClientRect();
+        setTooltip((t) => ({
+          ...t,
+          x: event.pageX - containerRect.left,
+          y: event.pageY - containerRect.top,
+        }));
       })
       .on("mouseleave", () => {
         setTooltip((t) => ({ ...t, visible: false }));
